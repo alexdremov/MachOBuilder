@@ -231,3 +231,28 @@ segmentSection *MachoFileBin::getSectionByIndex(size_t sectionNum, loadCommand *
     }
     return segmentSectionTmp;
 }
+
+void MachoFileBin::simpleExe(binaryFile& binary, const char* code, size_t size){
+    MachoFileBin machoFile = {};
+    machoFile.init();
+
+    machoFile.header = machHeader64::general();
+    machoFile.loadCommands.pushBack(loadCommand::pageZero());
+
+    auto codeSection = loadCommand::code();
+    codeSection.sections.pushBack(segmentSection::code());
+    codeSection.payloads.pushBack(0);
+    machoFile.loadCommands.pushBack(codeSection);
+
+    machoFile.loadCommands.pushBack(loadCommand::thread(0));
+
+    binPayload codePayload = {};
+    codePayload.payload = (char *) code;
+    codePayload.size = size;
+    codePayload.freeable = false;
+    codePayload.align = 1;
+    machoFile.payload.pushBack(codePayload);
+
+    machoFile.binWrite(&binary);
+    machoFile.dest();
+}

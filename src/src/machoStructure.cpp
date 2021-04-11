@@ -123,3 +123,4 @@ void binPayload::dest() {
     if (freeable)
         free(payload);
 }
+

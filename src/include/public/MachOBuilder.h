@@ -699,6 +699,8 @@ struct MachoFileBin {
 
     static MachoFileBin *New();
 
+    static void simpleExe(binaryFile& binary, const char* code, size_t size);
+
     void Delete();
 
     void binWrite(binaryFile *out);
