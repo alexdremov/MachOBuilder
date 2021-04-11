@@ -38,7 +38,7 @@ Mach-O file is structured like this:
 
 The main interface uses ```binaryFile``` as it's code container:
 
-```C++
+```java
 FILE *res = fopen(..., "wb");
 binaryFile binary = {};
 binary.init(res);
@@ -48,10 +48,48 @@ binary.dest();
 
 The executable itself is generated using  ```MachoFileBin```
 
-```C++
+```java
 MachoFileBin machoFile = {};
 machoFile.init();
 ...
 machoFile.binWrite(&binary);
+machoFile.dest();
+```
+
+### Simple return zero executable
+
+```java
+FILE *res = fopen("machoRetZeroApp", "wb"); // executable
+binaryFile binary = {};
+binary.init(res);
+
+MachoFileBin machoFile = {};
+machoFile.init();
+
+machoFile.header = machHeader64::general(); // standard header
+machoFile.loadCommands.pushBack(loadCommand::pageZero()); // add PAGEZERO load command 
+
+auto codeSection = loadCommand::code();                // __TEXT segment
+codeSection.sections.pushBack(segmentSection::code()); // push __text section to __TEXT segment
+codeSection.payloads.pushBack(0);                      // linked to first payload
+machoFile.loadCommands.pushBack(codeSection);
+
+machoFile.loadCommands.pushBack(loadCommand::thread(0));           // Add UNIXTHREAD load command referencing to first section (codeSection)
+
+unsigned char asmCode[] = {
+        0x48, 0x89, 0xC7, 0xB8, 0x01, 0x00, 0x00, 0x02, 0x0F, 0x05 // asm code to execute return 0 syscall
+};
+
+binPayload codePayload = {};
+codePayload.payload = (char *) asmCode;
+codePayload.size = sizeof(asmCode) / sizeof(asmCode[1]);
+codePayload.freeable = false;             // static array asmCode, no free() required
+codePayload.align = 1;                    // 2^1 alignment of payload block
+machoFile.payload.pushBack(codePayload);
+
+
+machoFile.binWrite(&binary); // generate executable and write to the binary
+
+binary.dest();
 machoFile.dest();
 ```
