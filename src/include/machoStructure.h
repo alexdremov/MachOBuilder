@@ -52,7 +52,6 @@ struct loadCommand {
 };
 
 struct machHeader64 {
-
     mach_header_64 header;
     size_t offset;
 

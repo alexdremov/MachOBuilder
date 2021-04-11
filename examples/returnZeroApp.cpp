@@ -9,8 +9,6 @@ int main() {
     binaryFile binary = {};
     binary.init(res);
 
-    MachoFileBin::New();
-
     MachoFileBin machoFile = {};
     machoFile.init();
 
