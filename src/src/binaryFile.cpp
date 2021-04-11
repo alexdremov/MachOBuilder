@@ -40,6 +40,7 @@ size_t binaryFile::write(const void *ptr, size_t count, size_t align) {
 }
 
 size_t binaryFile::writeOffset(const void *ptr, size_t count, size_t offset, int pos) {
+    fflush(file);
     fseek(file, offset, pos);
     size_t nWritten = fwrite(ptr, 1, count, file);
     fseek(file, 0, SEEK_END);
