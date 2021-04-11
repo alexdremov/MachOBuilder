@@ -93,3 +93,18 @@ machoFile.binWrite(&binary); // generate executable and write to the binary
 binary.dest();
 machoFile.dest();
 ```
+
+Or as simple as this:
+
+```java
+FILE *res = fopen("machoRetZeroApp", "wb");
+binaryFile binary = {};
+binary.init(res);
+
+unsigned char asmCode[] = {
+        0x48, 0x89, 0xC7, 0xB8, 0x01, 0x00, 0x00, 0x02, 0x0F, 0x05
+};
+MachoFileBin::simpleExe(binary, (char*) asmCode, sizeof(asmCode));
+
+binary.dest();
+```
