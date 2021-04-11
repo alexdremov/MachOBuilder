@@ -1,13 +1,12 @@
 //
 // Created by Александр Дремов on 09.04.2021.
 //
-#include "bytestruct/macho/machoFileBin.h"
-#include "bytestruct/BinFile.h"
+#include <MachOBuilder.h>
 #include <cstdio>
 
 int main() {
     FILE *res = fopen("machoRetZeroApp", "wb");
-    BinFile binary = {};
+    binaryFile binary = {};
     binary.init(res);
 
     MachoFileBin::New();

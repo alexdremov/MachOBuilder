@@ -1,11 +1,34 @@
 cmake_minimum_required(VERSION 3.17)
-project(MachOBuilder LANGUAGES CXX)
+project(MachOBuilder VERSION 1.0.0 DESCRIPTION "Mach-O file builder interface" LANGUAGES CXX)
 
-SET(CMAKE_CXX_FLAGS_DEBUG      "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wpedantic -Wall -Wextra")
-SET(CMAKE_CXX_FLAGS_RELEASE    "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 set(CMAKE_CXX_STANDARD 20)
+set(DEFAULT_BUILD_TYPE "Release")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wpedantic -Wall -Wextra")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
-set(PROJECT_VERSION "1.0.0")
+set(SOURCE_FILES src/src/loadCommands.cpp
+        src/src/machoBinFile.cpp
+        src/src/machoStructure.cpp
+        src/src/binaryFile.cpp
+        src/src/fastList.cpp)
 
-add_executable(returnZeroApp examples/returnZeroApp.cpp)
-include_directories(src)
+
+set(PUBLIC_INCLUDE_DIRECTORIES src/include/)
+set(PRIVATE_INCLUDE_DIRECTORIES src/src/)
+set(MY_PUBLIC_HEADERS src/include/public/MachOBuilder.h)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRECTORIES})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/include/public/MachOBuilder.h)
+
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
+

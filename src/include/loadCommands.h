@@ -7,6 +7,7 @@
 #include <mach/machine.h>
 #include <mach/mach.h>
 #include <mach-o/loader.h>
+#include "binaryFile.h"
 
 struct segmentCommand64{
     segment_command_64 segment;
@@ -53,18 +54,9 @@ struct segmentSection {
     section_64 section;
     size_t offset;
 
-    void binWrite(BinFile *out) {
-        BINFILE_WRITE_STRUCT(section);
-    }
+    void binWrite(binaryFile *out);
 
-    static segmentSection code() {
-        segmentSection sec = {};
-        strcpy(sec.section.segname, SEG_TEXT);
-        strcpy(sec.section.sectname, SECT_TEXT);
-        sec.section.align = 1;
-        sec.section.flags = S_REGULAR | S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS;
-        return sec;
-    }
+    static segmentSection code();
 };
 
 
