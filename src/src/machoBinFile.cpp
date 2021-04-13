@@ -3,7 +3,7 @@
 //
 #include "machoStructure.h"
 #include "machoBinFile.h"
-#include "FastList.h"
+#include "public/FastList.h"
 
 void MachoFileBin::init() {
     payload.init();

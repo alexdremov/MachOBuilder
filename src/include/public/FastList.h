@@ -4,21 +4,21 @@
 
 #ifndef FastList_GUARD
 #define FastList_GUARD
+
 #include <cstdlib>
 #include <cstdio>
 
+enum ListOpResult {
+    LIST_OP_OK,
+    LIST_OP_NOMEM,
+    LIST_OP_OVERFLOW,
+    LIST_OP_UNDERFLOW,
+    LIST_OP_NOTFOUND,
+    LIST_OP_SEGFAULT
+};
+
 template<typename T>
 class FastList {
-    enum ListOpResult {
-        LIST_OP_OK,
-        LIST_OP_NOMEM,
-        LIST_OP_CORRUPTED,
-        LIST_OP_OVERFLOW,
-        LIST_OP_UNDERFLOW,
-        LIST_OP_NOTFOUND,
-        LIST_OP_SEGFAULT
-    };
-
     struct ListNode {
         size_t next;
         size_t previous;
@@ -278,6 +278,19 @@ public:
         return LIST_OP_OK;
     }
 
+    /**
+     * Get an element at the physical position pos
+     * @param pos - physical pos of considered element
+     * @param value - retrieved value
+     * @return operation result
+     */
+    ListOpResult get(size_t pos, T *value) {
+        if (value == nullptr || !this->storage[pos].valid)
+            return LIST_OP_SEGFAULT;
+        *value = this->storage[pos].value;
+        return LIST_OP_OK;
+    }
+
     const ListNode *getStorage() const {
         return storage;
     }
@@ -289,6 +302,18 @@ public:
      * @return operation result
      */
     ListOpResult getLogic(size_t pos, T **value = nullptr) {
+        if (pos > this->size)
+            return LIST_OP_OVERFLOW;
+        return this->get(this->logicToPhysic(pos), value);
+    }
+
+    /**
+     * Get an element at the logical position pos
+     * @param pos - logical pos of considered element
+     * @param value - retrieved value
+     * @return operation result
+     */
+    ListOpResult getLogic(size_t pos, T *value = nullptr) {
         if (pos > this->size)
             return LIST_OP_OVERFLOW;
         return this->get(this->logicToPhysic(pos), value);
@@ -456,6 +481,26 @@ public:
             return LIST_OP_SEGFAULT;
         *pos = this->storage[*pos].previous;
         return LIST_OP_OK;
+    }
+
+    /**
+     * Search an element in the list. Retrieves the physic position
+     * @param pos - physic pos of considered element
+     * @param value - searched value
+     * @return operation result
+     */
+    ListOpResult search(size_t *pos, const T &value) const {
+        if (this->size == 0)
+            return LIST_OP_NOTFOUND;
+        *pos = this->storage[0].next;
+        while (*pos != 0) {
+            if (this->storage[*pos].value == value)
+                return LIST_OP_OK;
+            if (*pos == this->storage[0].previous)
+                break;
+            *pos = this->storage[*pos].next;
+        }
+        return LIST_OP_NOTFOUND;
     }
 
     /**

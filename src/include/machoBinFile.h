@@ -5,7 +5,7 @@
 #ifndef machoFileBin_GUARD
 #define machoFileBin_GUARD
 #include "machoStructure.h"
-#include "FastList.h"
+#include "public/FastList.h"
 
 struct MachoFileBin {
     machHeader64 header;

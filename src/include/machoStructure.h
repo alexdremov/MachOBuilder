@@ -12,7 +12,7 @@
 #include <cstdio>
 #include "binaryFile.h"
 #include "loadCommands.h"
-#include "FastList.h"
+#include "public/FastList.h"
 
 #define alignSmall 8
 #define alignPage 4096

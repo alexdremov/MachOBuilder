@@ -15,7 +15,7 @@ set(SOURCE_FILES src/src/loadCommands.cpp
 
 set(PUBLIC_INCLUDE_DIRECTORIES src/include/)
 set(PRIVATE_INCLUDE_DIRECTORIES src/src/)
-set(MY_PUBLIC_HEADERS src/include/public/MachOBuilder.h)
+set(MY_PUBLIC_HEADERS "src/include/public/MachOBuilder.h src/include/public/FastList.h")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
@@ -24,7 +24,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRECTORIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/include/public/MachOBuilder.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/include/public/MachOBuilder.h;src/include/public/FastList.h")
 
 install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
