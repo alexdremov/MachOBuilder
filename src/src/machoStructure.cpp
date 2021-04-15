@@ -94,6 +94,17 @@ void loadCommand::binWrite(binaryFile *out) {
     BINFILE_UPDATE(offset, generalSeg.segment, cmdsize);
 }
 
+loadCommand loadCommand::data() {
+    loadCommand seg = {};
+    seg.init();
+    seg.generalSeg.segment.cmd = LC_SEGMENT_64;
+    strcpy(seg.generalSeg.segment.segname, SEG_DATA);
+    seg.generalSeg.segment.vmsize = 0x0000000000008000;
+    seg.generalSeg.segment.maxprot = seg.generalSeg.segment.initprot = VM_PROT_READ | VM_PROT_WRITE;
+    seg.type = LC_TYPE_SEGMENT;
+    return seg;
+}
+
 machHeader64 machHeader64::general() {
     machHeader64 header = {};
     header.header.magic = MH_MAGIC_64;

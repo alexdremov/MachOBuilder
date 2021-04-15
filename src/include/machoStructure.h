@@ -44,6 +44,8 @@ struct loadCommand {
 
     static loadCommand code();
 
+    static loadCommand data();
+
     static loadCommand main(unsigned segNum);
 
     static loadCommand thread(unsigned segNum);

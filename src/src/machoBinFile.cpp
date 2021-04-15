@@ -244,6 +244,7 @@ void MachoFileBin::simpleExe(binaryFile& binary, const char* code, size_t size){
     codeSection.payloads.pushBack(0);
     machoFile.loadCommands.pushBack(codeSection);
 
+    machoFile.loadCommands.pushBack(loadCommand::data());
     machoFile.loadCommands.pushBack(loadCommand::thread(0));
 
     binPayload codePayload = {};
