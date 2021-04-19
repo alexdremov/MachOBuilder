@@ -65,6 +65,8 @@ struct loadCommand {
     static loadCommand thread(unsigned segNum);
 
     void binWrite(binaryFile *out);
+
+    loadCommand codeObject();
 };
 
 struct machHeader64 {

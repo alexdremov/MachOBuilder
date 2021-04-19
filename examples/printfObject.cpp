@@ -27,9 +27,8 @@ int main() {
     machoFile.startFromZero = false;
 
     machoFile.header = machHeader64::object();
-    auto codeSegment = loadCommand::code();
-    codeSegment.generalSeg.segment.maxprot |= VM_PROT_WRITE;
-    codeSegment.generalSeg.segment.initprot |= VM_PROT_WRITE;
+    auto codeSegment = loadCommand::codeObject();
+
 
     codeSegment.generalSeg.segment.segname[0] = 0;
     auto codeSection = segmentSection::code();

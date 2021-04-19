@@ -43,6 +43,13 @@ loadCommand loadCommand::code() {
     return seg;
 }
 
+loadCommand loadCommand::codeObject() {
+    auto seg = loadCommand::code();
+    seg.generalSeg.segment.maxprot |= VM_PROT_WRITE;
+    seg.generalSeg.segment.initprot |= VM_PROT_WRITE;
+    return seg;
+}
+
 loadCommand loadCommand::main(unsigned segNum, size_t stackSize) {
     loadCommand seg = {};
     seg.init();
