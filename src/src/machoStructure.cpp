@@ -2,6 +2,8 @@
 // Created by Александр Дремов on 11.04.2021.
 //
 
+#include <MachOBuilder.h>
+
 #include "machoStructure.h"
 
 
@@ -35,18 +37,18 @@ loadCommand loadCommand::code() {
     seg.init();
     seg.generalSeg.segment.cmd = LC_SEGMENT_64;
     strcpy(seg.generalSeg.segment.segname, SEG_TEXT);
-    seg.generalSeg.segment.vmsize = 0x0000000000004000;
+    seg.generalSeg.segment.vmsize = 0;
     seg.generalSeg.segment.maxprot = seg.generalSeg.segment.initprot = VM_PROT_READ | VM_PROT_EXECUTE;
     seg.type = LC_TYPE_SEGMENT;
     return seg;
 }
 
-loadCommand loadCommand::main(unsigned segNum) {
+loadCommand loadCommand::main(unsigned segNum, size_t stackSize) {
     loadCommand seg = {};
     seg.init();
     seg.entrySeg.segment.cmd = LC_MAIN;
     seg.entrySeg.segment.cmdsize = sizeof(seg.entrySeg.segment);
-    seg.entrySeg.segment.stacksize = 0;
+    seg.entrySeg.segment.stacksize = stackSize;
     seg.entrySeg.sectionIndex = segNum;
     seg.type = LC_TYPE_MAIN;
     return seg;
@@ -87,12 +89,21 @@ void loadCommand::binWrite(binaryFile *out) {
             BINFILE_WRITE_STRUCT(entrySeg.segment);
             break;
         }
+        case LC_TYPE_DYSYMTAB: {
+            BINFILE_WRITE_STRUCT(dysymtabSeg.segment);
+            break;
+        }
+        case LC_TYPE_SYMTAB:{
+            BINFILE_WRITE_STRUCT(symtabSeg.segment);
+            break;
+        }
     }
     uint32_t cmdsize = out->sizeNow - offset;
     out->writeZeros(cmdsize % alignSmall); // size divisible by 8;
     generalSeg.segment.cmdsize = out->sizeNow - offset;
     BINFILE_UPDATE(offset, generalSeg.segment, cmdsize);
 }
+
 
 loadCommand loadCommand::data() {
     loadCommand seg = {};
@@ -105,7 +116,25 @@ loadCommand loadCommand::data() {
     return seg;
 }
 
-machHeader64 machHeader64::general() {
+loadCommand loadCommand::symtab() {
+    loadCommand seg = {};
+    seg.init();
+    seg.dysymtabSeg.segment.cmd = LC_SYMTAB;
+    seg.dysymtabSeg.segment.cmdsize = sizeof(seg.dysymtabSeg);
+    seg.type = LC_TYPE_SYMTAB;
+    return seg;
+}
+
+loadCommand loadCommand::dysymtab() {
+    loadCommand seg = {};
+    seg.init();
+    seg.dysymtabSeg.segment.cmd = LC_DYSYMTAB;
+    seg.symtabSeg.segment.cmdsize = sizeof(seg.symtabSeg);
+    seg.type = LC_TYPE_DYSYMTAB;
+    return seg;
+}
+
+machHeader64 machHeader64::executable() {
     machHeader64 header = {};
     header.header.magic = MH_MAGIC_64;
     header.header.cputype = CPU_TYPE_X86_64;
@@ -114,6 +143,18 @@ machHeader64 machHeader64::general() {
     header.header.ncmds = 0; /* to be modified */
     header.header.sizeofcmds = 0; /* to be modified after writing segments */
     header.header.flags = MH_NOUNDEFS;
+    return header;
+}
+
+machHeader64 machHeader64::object() {
+    machHeader64 header = {};
+    header.header.magic = MH_MAGIC_64;
+    header.header.cputype = CPU_TYPE_X86_64;
+    header.header.cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+    header.header.filetype = MH_OBJECT;
+    header.header.ncmds = 0; /* to be modified */
+    header.header.sizeofcmds = 0; /* to be modified after writing segments */
+    header.header.flags = MH_SUBSECTIONS_VIA_SYMBOLS;
     return header;
 }
 
@@ -126,8 +167,8 @@ void binPayload::binWrite(binaryFile *out) {
     out->alignZeroes(align);
     offset = out->sizeNow;
     out->write(payload, size);
-    out->writeZeros(size % alignSmall);
     realSize = size + size % alignSmall;
+//    out->writeZeros(size % alignSmall);
 }
 
 void binPayload::dest() {

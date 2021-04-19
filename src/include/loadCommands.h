@@ -4,21 +4,25 @@
 
 #ifndef NGGC_LOADCOMMANDS_H
 #define NGGC_LOADCOMMANDS_H
+#ifndef PUBLIC_HEADER
+
 #include <mach/machine.h>
 #include <mach/mach.h>
 #include <mach-o/loader.h>
 #include "binaryFile.h"
 
-struct segmentCommand64{
+#endif
+
+struct segmentCommand64 {
     segment_command_64 segment;
 };
 
-struct entryPointCommand{
+struct entryPointCommand {
     entry_point_command segment;
     unsigned sectionIndex;
 };
 
-struct unixThread{
+struct unixThread {
     thread_command thread;
     uint32_t flavor;
     uint32_t count;
@@ -53,11 +57,19 @@ struct unixThreadCommand {
 struct segmentSection {
     section_64 section;
     size_t offset;
+    size_t relocPayload;
 
     void binWrite(binaryFile *out);
 
     static segmentSection code();
 };
 
+struct symtabCommand{
+    symtab_command segment;
+};
+
+struct dysymtabCommand{
+    dysymtab_command segment;
+};
 
 #endif //NGGC_LOADCOMMANDS_H

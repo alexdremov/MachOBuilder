@@ -66,7 +66,7 @@ binary.init(res);
 MachoFileBin machoFile = {};
 machoFile.init();
 
-machoFile.header = machHeader64::general(); // standard header
+machoFile.header = machHeader64::executable(); // standard header
 machoFile.loadCommands.pushBack(loadCommand::pageZero()); // add PAGEZERO load command 
 
 auto codeSection = loadCommand::code();                // __TEXT segment

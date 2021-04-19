@@ -10,17 +10,21 @@ set(SOURCE_FILES src/src/loadCommands.cpp
         src/src/machoBinFile.cpp
         src/src/machoStructure.cpp
         src/src/binaryFile.cpp
-        src/src/fastList.cpp)
+        src/src/fastList.cpp
+        src/src/relocateStruct.cpp
+        src/src/stringTable.cpp
+        src/include/hash/hashes.cpp)
 
 
 set(PUBLIC_INCLUDE_DIRECTORIES src/include/)
-set(PRIVATE_INCLUDE_DIRECTORIES src/src/)
+set(PRIVATE_INCLUDE_DIRECTORIES "src/src/")
 set(MY_PUBLIC_HEADERS "src/include/public/MachOBuilder.h src/include/public/FastList.h")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRECTORIES})
+target_include_directories(${PROJECT_NAME} PRIVATE src/include/public)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)
@@ -31,5 +35,9 @@ install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_BINDIR}"
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+add_custom_command(TARGET ${PROJECT_NAME}
+        PRE_BUILD
+        COMMAND cd ${CMAKE_SOURCE_DIR}/src/include/public && python3 publicHeaderGen.py)
 
 add_subdirectory(examples)

@@ -6,11 +6,16 @@
 #define machoFileBin_GUARD
 #include "machoStructure.h"
 #include "public/FastList.h"
+#include "relocateStruct.h"
+#include "stringTable.h"
 
 struct MachoFileBin {
     machHeader64 header;
     FastList<loadCommand> loadCommands;
     FastList<binPayload> payload;
+    symbolTable sytable;
+    bool vmAlign;
+    bool startFromZero;
 
     void init();
 
@@ -32,11 +37,17 @@ struct MachoFileBin {
 
     void vmRemap(binaryFile *out);
 
+    void relocRemap(binaryFile *out);
+
     void payloadsProcess(binaryFile *out);
 
     void fileOffsetsRemap(binaryFile *out);
 
     segmentSection *getSectionByIndex(size_t sectionNum, loadCommand** lc= nullptr);
+
+    void symbolTableSet(binaryFile *pFile);
+
+    void dsymUpdate(binaryFile *out);
 };
 
 #endif //machoFileBin_GUARD

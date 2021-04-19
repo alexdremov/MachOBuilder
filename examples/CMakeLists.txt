@@ -10,5 +10,8 @@ SET(CMAKE_EXE_LINKER_FLAGS "-L/usr/local/lib")
 
 add_executable(returnZeroApp
         returnZeroApp.cpp)
+add_executable(printfObj
+        printfObject.cpp)
 
 target_link_libraries(returnZeroApp MachOBuilder)
+target_link_libraries(printfObj MachOBuilder)

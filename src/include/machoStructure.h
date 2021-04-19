@@ -4,12 +4,18 @@
 
 #ifndef CLANGUAGE_MACHOHEADERSTR_H
 #define CLANGUAGE_MACHOHEADERSTR_H
+#ifndef PUBLIC_HEADER
 
 #include <mach/machine.h>
 #include <mach/mach.h>
+#include <mach-o/reloc.h>
+#include <mach-o/nlist.h>
 #include <mach-o/loader.h>
 #include <cstring>
 #include <cstdio>
+
+#endif
+
 #include "binaryFile.h"
 #include "loadCommands.h"
 #include "public/FastList.h"
@@ -24,12 +30,16 @@ struct loadCommand {
     enum loadCommandType {
         LC_TYPE_SEGMENT,
         LC_TYPE_THREAD,
-        LC_TYPE_MAIN
+        LC_TYPE_MAIN,
+        LC_TYPE_DYSYMTAB,
+        LC_TYPE_SYMTAB
     };
     union {
         unixThreadCommand threadSeg;
         segmentCommand64 generalSeg;
         entryPointCommand entrySeg;
+        symtabCommand symtabSeg;
+        dysymtabCommand dysymtabSeg;
     };
     FastList<segmentSection> sections;
     FastList<unsigned> payloads;
@@ -46,7 +56,11 @@ struct loadCommand {
 
     static loadCommand data();
 
-    static loadCommand main(unsigned segNum);
+    static loadCommand symtab();
+
+    static loadCommand dysymtab();
+
+    static loadCommand main(unsigned segNum, size_t stackSize = 0);
 
     static loadCommand thread(unsigned segNum);
 
@@ -57,7 +71,9 @@ struct machHeader64 {
     mach_header_64 header;
     size_t offset;
 
-    static machHeader64 general();
+    static machHeader64 executable();
+
+    static machHeader64 object();
 
     void binWrite(binaryFile *out);
 };

@@ -17,6 +17,7 @@ segmentSection segmentSection::code() {
     strcpy(sec.section.segname, SEG_TEXT);
     strcpy(sec.section.sectname, SECT_TEXT);
     sec.section.align = 1;
+    sec.relocPayload = -1;
     sec.section.flags = S_REGULAR | S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS;
     return sec;
 }
