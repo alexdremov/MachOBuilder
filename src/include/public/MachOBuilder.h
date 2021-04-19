@@ -55,7 +55,7 @@ class HashMasm {
     size_t size;
     size_t threshold;
 
-    size_t hashString(const char *key, size_t len = 0) {
+    size_t hashString(const char *key) {
         #ifdef ASMOPT
             #pragma message "Asm optimization of HashMasm::hashString\n"
             #ifdef USECRC
@@ -97,7 +97,7 @@ class HashMasm {
     }
 
     void freeStorage(FastList<HashCell> *storageTest) {
-        for (int i = 0; i < capacity; i++)
+        for (size_t i = 0; i < capacity; i++)
             storageTest[i].dest();
         free(storageTest);
     }
@@ -168,7 +168,7 @@ public:
 
     void set(const char *key, const T &value, bool dublicateKey = true) {
         tryRehash();
-        size_t hashedInitial = hashString(key, strlen(key));
+        size_t hashedInitial = hashString(key);
         size_t hashed = hashedInitial % capacity;
         char *keyDub = const_cast<char *>(key);
         if (dublicateKey)
@@ -317,7 +317,7 @@ private:
             return now;
         }
 
-        bool operator==(const HashIter &other) {
+        bool operator==(const HashIter &other) const{
             if (end == other.end && end)
                 return true;
             return end == other.end && pos == other.pos && bucket == other.bucket && object == other.object;
@@ -337,7 +337,7 @@ public:
     }
 
     HashIter find(const char *key) {
-        size_t hashed = hashString(key, strlen(key)) % capacity;
+        size_t hashed = hashString(key) % capacity;
         size_t iter = 0;
         HashCell *node = findCell(key, hashed, &iter);
         if (!node)
@@ -508,7 +508,7 @@ struct stringTablePayload {
 
     void init();
 
-    unsigned addString(char *key);
+    unsigned addString(const char *key);
 
     void dest();
 
@@ -530,13 +530,13 @@ struct symbolTable {
 
     void dest();
 
-    void addExternal(char *key);
-
-    void addInside(char *key, unsigned section);
+    void addExternal(const char *key);
 
     void binWrite(binaryFile *out);
 
     void writePayload(binaryFile *out);
+
+    void addInside(const char *key, unsigned int section, size_t offset = 0);
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H
@@ -752,89 +752,19 @@ struct ObjectMachOGen{
     size_t codeSize;
     size_t mainOffset;
 
-    void init(){
-        mainOffset = 0;
-        code = nullptr;
-        offsets.init();
-    }
+    void init();
 
-    void dest(){
-        offsets.dest();
-    }
+    void dest();
 
-    void addReference(const char* name, size_t offset){
-        auto found = offsets.find(name);
-        if (found == offsets.end()){
-            FastList<size_t> list = {};
-            list.init();
-            offsets.set(name, list);
-            found = offsets.find(name);
-        }
-        (*found).value.pushBack(offset);
-    }
+    void addReference(const char* name, size_t offset);
 
-    void addCode(const char* setCode, size_t size){
-        code = setCode;
-        codeSize = size;
-    }
+    void addCode(const char* setCode, size_t size);
 
-    void addCode(const unsigned char* setCode, size_t size){
-        code = (char*)setCode;
-        codeSize = size;
-    }
+    void addCode(const unsigned char* setCode, size_t size);
 
-    void setMain(size_t offset){
-        mainOffset = offset;
-    }
+    void setMain(size_t offset);
 
-    void dumpFile(binaryFile& binary){
-        MachoFileBin machoFile = {};
-        machoFile.init();
-        machoFile.vmAlign = false;
-        machoFile.startFromZero = false;
-
-        machoFile.header = machHeader64::object();
-        auto codeSegment = loadCommand::codeObject();
-        auto codeSection = segmentSection::code();
-        codeSection.section.align = 4;
-        codeSection.relocPayload = 1;
-        codeSegment.payloads.pushBack(0);
-
-        binPayload codePayload = {};
-        codePayload.payload = (char *) code;
-        codePayload.size = codeSize;
-        codePayload.freeable = false;
-        codePayload.align = 1;
-        machoFile.payload.pushBack(codePayload);
-
-        for (auto elem: offsets)
-            machoFile.sytable.addExternal(elem.key);
-        machoFile.sytable.addInside("_main", 1);
-
-        relocatePayload relPayload = {};
-        relPayload.init();
-
-        for (auto elem: offsets){
-            auto foundIndex = machoFile.sytable.payload.storage.find(elem.key);
-            unsigned nameIndex = (*foundIndex).value.index;
-            for(auto i = elem.value.begin(); i != elem.value.end(); elem.value.nextIterator(&i)){
-                size_t fileOffset = 0;
-                elem.value.get(i, &fileOffset);
-                relPayload.addReloc(fileOffset, nameIndex, 1, 2, 1, 2);
-            }
-        }
-
-        codeSection.section.nreloc = relPayload.info.getSize();
-        codeSegment.sections.pushBack(codeSection);
-        machoFile.loadCommands.pushBack(codeSegment);
-        machoFile.payload.pushBack(relPayload.bufferWrite());
-
-        machoFile.loadCommands.pushBack(loadCommand::symtab());
-        machoFile.loadCommands.pushBack(loadCommand::dysymtab());
-
-        machoFile.binWrite(&binary);
-        machoFile.dest();
-    }
+    void dumpFile(binaryFile& binary);
 };
 
 #endif //MACHOBUILDER_OBJECTGENERATOR_H

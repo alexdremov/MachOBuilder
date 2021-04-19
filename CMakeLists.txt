@@ -13,7 +13,9 @@ set(SOURCE_FILES src/src/loadCommands.cpp
         src/src/fastList.cpp
         src/src/relocateStruct.cpp
         src/src/stringTable.cpp
-        src/include/hash/hashes.cpp)
+        src/src/objectGenerator.cpp
+        src/include/hash/hashes.cpp
+        )
 
 
 set(PUBLIC_INCLUDE_DIRECTORIES src/include/)

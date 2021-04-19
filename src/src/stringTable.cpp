@@ -9,7 +9,7 @@ void stringTablePayload::init() {
     storage.init();
 }
 
-unsigned stringTablePayload::addString(char *key) {
+unsigned stringTablePayload::addString(const char *key) {
     unsigned val = storage.getSize();
     auto res = storage.find(key);
     if (res == storage.end()) {
@@ -54,19 +54,20 @@ void symbolTable::dest() {
     payload.dest();
 }
 
-void symbolTable::addInside(char *key, unsigned section) {
+void symbolTable::addInside(const char *key, unsigned section, size_t offset) {
     unsigned index = payload.addString(key);
     nlist_64 symtbEntry = {};
     symtbEntry.n_type = N_SECT | N_EXT;
     symtbEntry.n_un.n_strx = index;
     symtbEntry.n_sect = section;
+    symtbEntry.n_value = offset;
     auto found = storage.find(key);
     if (found != storage.end())
         return;
     storage.set(key, {symtbEntry, 0, false});
 }
 
-void symbolTable::addExternal(char *key) {
+void symbolTable::addExternal(const char *key) {
     unsigned index = payload.addString(key);
     nlist_64 symtbEntry = {};
     symtbEntry.n_type = N_UNDF | N_EXT;

@@ -23,7 +23,7 @@ struct stringTablePayload {
 
     void init();
 
-    unsigned addString(char *key);
+    unsigned addString(const char *key);
 
     void dest();
 
@@ -45,13 +45,13 @@ struct symbolTable {
 
     void dest();
 
-    void addExternal(char *key);
-
-    void addInside(char *key, unsigned section);
+    void addExternal(const char *key);
 
     void binWrite(binaryFile *out);
 
     void writePayload(binaryFile *out);
+
+    void addInside(const char *key, unsigned int section, size_t offset = 0);
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H

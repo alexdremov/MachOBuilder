@@ -36,7 +36,7 @@ class HashMasm {
     size_t size;
     size_t threshold;
 
-    size_t hashString(const char *key, size_t len = 0) {
+    size_t hashString(const char *key) {
         #ifdef ASMOPT
             #pragma message "Asm optimization of HashMasm::hashString\n"
             #ifdef USECRC
@@ -78,7 +78,7 @@ class HashMasm {
     }
 
     void freeStorage(FastList<HashCell> *storageTest) {
-        for (int i = 0; i < capacity; i++)
+        for (size_t i = 0; i < capacity; i++)
             storageTest[i].dest();
         free(storageTest);
     }
@@ -149,7 +149,7 @@ public:
 
     void set(const char *key, const T &value, bool dublicateKey = true) {
         tryRehash();
-        size_t hashedInitial = hashString(key, strlen(key));
+        size_t hashedInitial = hashString(key);
         size_t hashed = hashedInitial % capacity;
         char *keyDub = const_cast<char *>(key);
         if (dublicateKey)
@@ -298,7 +298,7 @@ private:
             return now;
         }
 
-        bool operator==(const HashIter &other) {
+        bool operator==(const HashIter &other) const{
             if (end == other.end && end)
                 return true;
             return end == other.end && pos == other.pos && bucket == other.bucket && object == other.object;
@@ -318,7 +318,7 @@ public:
     }
 
     HashIter find(const char *key) {
-        size_t hashed = hashString(key, strlen(key)) % capacity;
+        size_t hashed = hashString(key) % capacity;
         size_t iter = 0;
         HashCell *node = findCell(key, hashed, &iter);
         if (!node)

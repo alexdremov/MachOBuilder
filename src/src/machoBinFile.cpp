@@ -213,6 +213,8 @@ void MachoFileBin::payloadsProcess(binaryFile *out) {
             }
             case loadCommand::LC_TYPE_THREAD:
             case loadCommand::LC_TYPE_MAIN:
+            case loadCommand::LC_TYPE_DYSYMTAB:
+            case loadCommand::LC_TYPE_SYMTAB:
                 break;
         }
     }
