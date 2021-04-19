@@ -115,25 +115,28 @@ There is an API for creating an object file that can be linked using ld / gcc / 
 
 ```java
 FILE *res = fopen("machoObjectAuto.o", "wb");
-    binaryFile binary = {};
-    binary.init(res);
+binaryFile binary = {};
+binary.init(res);
 
-    ObjectMachOGen mgen = {};
-    mgen.init();
+ObjectMachOGen mgen = {};
+mgen.init();
 
-    unsigned char asmCode[] = {
-            0x55, 0x48, 0x89, 0xE5, // some commands
-            0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0x5 offset
-            0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0xA offset
-            0x31, 0xC0, 0x5D,  0xC3 // some commands
-    };
+unsigned char asmCode[] = {
+        0x55, 0x48, 0x89, 0xE5, // some commands
+        0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0x5 offset
+        0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0xA offset
+        0x31, 0xC0, 0x5D,  0xC3 // some commands
+};
 
-    mgen.addCode(asmCode, sizeof(asmCode)); // set code
-    mgen.setMain(0); // set main function offset
-    mgen.bind("__Z8printTenv", 0x5); // 0x5 offset relocate to __Z8printTenv function
-    mgen.bind("__Z8printTenv", 0xA); // 0xA offset relocate to __Z8printTenv function
-    mgen.dumpFile(binary); // dump to file
+mgen.addCode(asmCode, sizeof(asmCode)); // set code
+mgen.setMain(0); // set main function offset
+mgen.bind("__Z8printTenv", 0x5); // 0x5 offset relocate to __Z8printTenv function
+mgen.bind("__Z8printTenv", 0xA); // 0xA offset relocate to __Z8printTenv function
+mgen.dumpFile(binary); // dump to file
 
-    mgen.dest();
-    binary.dest();
+mgen.dest();
+binary.dest();
 ```
+
+It will create such structure:
+<img width="400px" src="https://github.com/AlexRoar/MachOBuilder/raw/main/assets/structure.png">
