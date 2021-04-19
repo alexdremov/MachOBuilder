@@ -102,6 +102,7 @@ void symbolTable::writePayload(binaryFile *out) {
         elem.value.list.n_un.n_strx = (*foundPayload).value.offset - payload.offset;
         BINFILE_UPDATE(elem.value.offset, elem.value.list, n_un.n_strx);
     }
+    free(symbols);
 }
 
 
