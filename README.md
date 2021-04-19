@@ -139,4 +139,5 @@ binary.dest();
 ```
 
 It will create such structure:
-<img width="400px" src="https://github.com/AlexRoar/MachOBuilder/raw/main/assets/structure.png">
+
+<img width="400px" src="https://github.com/AlexRoar/MachOBuilder/raw/main/assets/struct.png">
