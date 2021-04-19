@@ -756,7 +756,7 @@ struct ObjectMachOGen{
 
     void dest();
 
-    void addReference(const char* name, size_t offset);
+    void bind(const char* name, size_t offset);
 
     void addCode(const char* setCode, size_t size);
 

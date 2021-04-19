@@ -14,7 +14,7 @@ void ObjectMachOGen::dest(){
     offsets.dest();
 }
 
-void ObjectMachOGen::addReference(const char* name, size_t offset){
+void ObjectMachOGen::bind(const char* name, size_t offset){
     auto found = offsets.find(name);
     if (found == offsets.end()){
         FastList<size_t> list = {};

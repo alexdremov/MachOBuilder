@@ -21,9 +21,8 @@ int main() {
 
     mgen.addCode(asmCode, sizeof(asmCode));
     mgen.setMain(0);
-    mgen.addReference("__Z8printTenv", 0x5);
-    mgen.addReference("__Z8printTenv", 0xA);
-
+    mgen.bind("__Z8printTenv", 0x5);
+    mgen.bind("__Z8printTenv", 0xA);
     mgen.dumpFile(binary);
 
     mgen.dest();
