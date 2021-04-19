@@ -5,8 +5,9 @@
 #ifndef BinFile_GUARD
 #define BinFile_GUARD
 #ifndef PUBLIC_HEADER
-#include <cstdio>
-#include <cstdlib>
+
+    #include <cstdio>
+    #include <cstdlib>
 #endif
 
 #define BINFILE_WRITE_STRUCT(structure) out->write((const void*)(&structure), sizeof(structure))

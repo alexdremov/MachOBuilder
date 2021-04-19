@@ -11,7 +11,8 @@ files = [
     'stringTable.h',
     'machoBinFile.h',
     'machoStructure.h',
-    'relocateStruct.h'
+    'relocateStruct.h',
+    'objectGenerator.h'
 ]
 
 result = ""

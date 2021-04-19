@@ -47,6 +47,7 @@ loadCommand loadCommand::codeObject() {
     auto seg = loadCommand::code();
     seg.generalSeg.segment.maxprot |= VM_PROT_WRITE;
     seg.generalSeg.segment.initprot |= VM_PROT_WRITE;
+    seg.generalSeg.segment.segname[0] = 0;
     return seg;
 }
 
