@@ -5,12 +5,13 @@
 #ifndef MACHOBUILDER_OBJECTGENERATOR_H
 #define MACHOBUILDER_OBJECTGENERATOR_H
 #include "HashMasm.h"
-#include "MachOBuilder.h"
 #include "binaryFile.h"
 #include <cstdio>
+#include <MachOBuilder.h>
 
 struct ObjectMachOGen{
-    HashMasm<FastList<size_t>> offsets;
+    relocatePayload relPayload;
+    MachoFileBin machoFile;
     const char* code;
     const char* data;
     size_t codeSize;
@@ -21,7 +22,7 @@ struct ObjectMachOGen{
 
     void dest();
 
-    void bind(const char* name, size_t offset);
+    void bind(const char* name, size_t offsetName);
 
     void addCode(const char* setCode, size_t size);
 
@@ -34,6 +35,12 @@ struct ObjectMachOGen{
     void setMain(size_t offset);
 
     void dumpFile(binaryFile& binary);
+
+    void bindVarData(const char *name, size_t offsetData, size_t offsetBind);
+
+    void generalSetup(loadCommand &codeSegment, segmentSection &codeSection);
+
+    void addDataIfNeeded(loadCommand &codeSegment);
 };
 
 #endif //MACHOBUILDER_OBJECTGENERATOR_H

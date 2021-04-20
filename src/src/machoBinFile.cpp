@@ -166,9 +166,8 @@ void MachoFileBin::payloadsProcess(binaryFile *out) {
              itPayload != pLoadCommand->payloads.end(); pLoadCommand->payloads.nextIterator(&itPayload)) {
             unsigned *payloadId = nullptr;
             pLoadCommand->payloads.get(itPayload, &payloadId);
-            size_t payloadAddr = pLoadCommand->payloads.logicToPhysic(*payloadId);
             binPayload *payloadNow = nullptr;
-            payload.get(payloadAddr, &payloadNow);
+            payload.getLogic(*payloadId, &payloadNow);
             payloadNow->binWrite(out);
         }
         for (size_t sectit = pLoadCommand->sections.begin();
@@ -335,7 +334,7 @@ void MachoFileBin::dsymUpdate(binaryFile *out){
         for (auto &elem: sytable.storage) {
             if (elem.value.type == symbolTableEntry::SYM_TYPE_EXTERNAL)
                 externalSize++;
-            else if (elem.value.type == symbolTableEntry::SYM_TYPE_INTERNAL)
+            else if (elem.value.type == symbolTableEntry::SYM_TYPE_INTERNAL || elem.value.type == symbolTableEntry::SYM_TYPE_DATA)
                 internalSize++;
         }
         command->dysymtabSeg.segment.ilocalsym = 0;

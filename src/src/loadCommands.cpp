@@ -2,8 +2,6 @@
 // Created by Александр Дремов on 11.04.2021.
 //
 
-#include <MachOBuilder.h>
-
 #include "loadCommands.h"
 #include "binaryFile.h"
 

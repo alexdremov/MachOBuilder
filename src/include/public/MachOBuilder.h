@@ -27,7 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iterator>
-#include "FastList.h"
+#include <FastList.h>
 #include "hash/hashes.h"
 
 template<typename T>
@@ -501,6 +501,10 @@ struct dysymtabCommand{
 struct stringIndOffset {
     size_t index;
     size_t offset;
+    uint32_t r_pcrel;
+    uint32_t r_length;
+    uint32_t r_extern;
+    uint32_t r_type;
 };
 
 struct stringTablePayload {
@@ -510,22 +514,25 @@ struct stringTablePayload {
 
     void init();
 
-    unsigned addString(const char *key);
+    unsigned addString(const char *key, uint32_t valOffset = 0,
+                       uint32_t r_pcrel = 0, uint32_t r_length = 0,
+                       uint32_t r_extern = 0, uint32_t r_type = 0);
 
     void dest();
 
-    char** binWrite(binaryFile *out);
+    char **binWrite(binaryFile *out);
 };
 
-struct symbolTableEntry{
+struct symbolTableEntry {
     enum symbolTableType {
         SYM_TYPE_EXTERNAL,
         SYM_TYPE_INTERNAL,
-        SYM_TYPE_LOCVAR
+        SYM_TYPE_DATA
     };
     nlist_64 list;
     size_t offset;
     symbolTableType type;
+    size_t symTabIndex;
 };
 
 struct symbolTable {
@@ -546,6 +553,8 @@ struct symbolTable {
     void addInternal(const char *key, unsigned int section, size_t offset = 0);
 
     void addData(const char *key, unsigned int section, size_t offset = 0);
+
+    void setSymIdexes();
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H
@@ -720,19 +729,24 @@ struct binPayload {
 
 #endif
 
-#include "FastList.h"
+#include <FastList.h>
+
+struct relocationInfo{
+    relocation_info info;
+    const char* name;
+};
 
 struct relocatePayload {
-    FastList<relocation_info> info;
+    FastList<relocationInfo> info;
 
     void binWrite(binaryFile *out);
 
     binPayload bufferWrite();
 
-    void addReloc(int32_t r_address, uint32_t r_symbolnum, uint32_t r_pcrel, uint32_t r_length,
+    void addReloc(const char* name, int32_t r_address, uint32_t r_symbolnum, uint32_t r_pcrel, uint32_t r_length,
                   uint32_t r_extern, uint32_t r_type);
 
-    void addReloc(const relocation_info &other);
+    void addReloc(const relocationInfo &other);
 
     void init();
 
@@ -751,13 +765,13 @@ struct relocatePayload {
 #ifndef MACHOBUILDER_OBJECTGENERATOR_H
 #define MACHOBUILDER_OBJECTGENERATOR_H
 #include "HashMasm.h"
-#include "MachOBuilder.h"
 #include "binaryFile.h"
 #include <cstdio>
+#include <MachOBuilder.h>
 
 struct ObjectMachOGen{
-    HashMasm<FastList<size_t>> offsets;
-    HashMasm<FastList<size_t>> offsetsData;
+    relocatePayload relPayload;
+    MachoFileBin machoFile;
     const char* code;
     const char* data;
     size_t codeSize;
@@ -768,7 +782,7 @@ struct ObjectMachOGen{
 
     void dest();
 
-    void bind(const char* name, size_t offset);
+    void bind(const char* name, size_t offsetName);
 
     void addCode(const char* setCode, size_t size);
 
@@ -782,7 +796,11 @@ struct ObjectMachOGen{
 
     void dumpFile(binaryFile& binary);
 
-    void bindData(const char *name, size_t offset);
+    void bindVarData(const char *name, size_t offsetData, size_t offsetBind);
+
+    void generalSetup(loadCommand &codeSegment, segmentSection &codeSection);
+
+    void addDataIfNeeded(loadCommand &codeSegment);
 };
 
 #endif //MACHOBUILDER_OBJECTGENERATOR_H

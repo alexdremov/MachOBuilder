@@ -14,6 +14,10 @@
 struct stringIndOffset {
     size_t index;
     size_t offset;
+    uint32_t r_pcrel;
+    uint32_t r_length;
+    uint32_t r_extern;
+    uint32_t r_type;
 };
 
 struct stringTablePayload {
@@ -23,21 +27,25 @@ struct stringTablePayload {
 
     void init();
 
-    unsigned addString(const char *key);
+    unsigned addString(const char *key, uint32_t valOffset = 0,
+                       uint32_t r_pcrel = 0, uint32_t r_length = 0,
+                       uint32_t r_extern = 0, uint32_t r_type = 0);
 
     void dest();
 
-    char** binWrite(binaryFile *out);
+    char **binWrite(binaryFile *out);
 };
 
-struct symbolTableEntry{
+struct symbolTableEntry {
     enum symbolTableType {
         SYM_TYPE_EXTERNAL,
-        SYM_TYPE_INTERNAL
+        SYM_TYPE_INTERNAL,
+        SYM_TYPE_DATA
     };
     nlist_64 list;
     size_t offset;
     symbolTableType type;
+    size_t symTabIndex;
 };
 
 struct symbolTable {
@@ -58,6 +66,8 @@ struct symbolTable {
     void addInternal(const char *key, unsigned int section, size_t offset = 0);
 
     void addData(const char *key, unsigned int section, size_t offset = 0);
+
+    void setSymIdexes();
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H

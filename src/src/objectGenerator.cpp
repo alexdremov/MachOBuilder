@@ -10,22 +10,35 @@ void ObjectMachOGen::init() {
     data = nullptr;
     codeSize = 0;
     dataSize = 0;
-    offsets.init();
+    relPayload.init();
+    machoFile.init();
 }
 
 void ObjectMachOGen::dest() {
-    offsets.dest();
+    relPayload.dest();
+    machoFile.dest();
 }
 
-void ObjectMachOGen::bind(const char *name, size_t offset) {
-    auto found = offsets.find(name);
-    if (found == offsets.end()) {
-        FastList<size_t> list = {};
-        list.init();
-        offsets.set(name, list);
-        found = offsets.find(name);
-    }
-    (*found).value.pushBack(offset);
+void ObjectMachOGen::bind(const char *name, size_t offsetName) {
+    machoFile.sytable.addExternal(name);
+    auto foundIndex = machoFile.sytable.payload.storage.find(name);
+    unsigned nameIndex = (*foundIndex).value.index;
+    relPayload.addReloc((*foundIndex).key, offsetName, nameIndex,
+                        (*foundIndex).value.r_pcrel,
+                        (*foundIndex).value.r_length,
+                        (*foundIndex).value.r_extern,
+                        (*foundIndex).value.r_type);
+}
+
+void ObjectMachOGen::bindVarData(const char *name, size_t offsetData, size_t offsetBind) {
+    machoFile.sytable.addData(name, 2, offsetData);
+    auto foundIndex = machoFile.sytable.payload.storage.find(name);
+    unsigned nameIndex = (*foundIndex).value.index;
+    relPayload.addReloc((*foundIndex).key, offsetBind, nameIndex,
+                        (*foundIndex).value.r_pcrel,
+                        (*foundIndex).value.r_length,
+                        (*foundIndex).value.r_extern,
+                        (*foundIndex).value.r_type);
 }
 
 void ObjectMachOGen::addCode(const char *setCode, size_t size) {
@@ -43,46 +56,28 @@ void ObjectMachOGen::setMain(size_t offset) {
 }
 
 void ObjectMachOGen::dumpFile(binaryFile &binary) {
-    MachoFileBin machoFile = {};
-    machoFile.init();
-    machoFile.vmAlign = false;
-    machoFile.startFromZero = false;
-
-    machoFile.header = machHeader64::object();
-    auto codeSegment = loadCommand::codeObject();
-    auto codeSection = segmentSection::code();
-    codeSection.section.align = 4;
-    codeSection.relocPayload = 1;
-    codeSegment.payloads.pushBack(0);
-
-    binPayload codePayload = {};
-    codePayload.payload = (char *) code;
-    codePayload.size = codeSize;
-    codePayload.freeable = false;
-    codePayload.align = 1;
-    machoFile.payload.pushBack(codePayload);
-
-    for (auto elem: offsets)
-        machoFile.sytable.addExternal(elem.key);
+    loadCommand codeSegment = {};
+    segmentSection codeSection = {};
     machoFile.sytable.addInternal("_main", 1, mainOffset);
+    generalSetup(codeSegment, codeSection);
 
-    relocatePayload relPayload = {};
-    relPayload.init();
+    size_t codeSectionPtr = 0;
+    codeSegment.sections.pushBack(codeSection, &codeSectionPtr);
+    addDataIfNeeded(codeSegment);
 
-    for (auto elem: offsets) {
-        auto foundIndex = machoFile.sytable.payload.storage.find(elem.key);
-        unsigned nameIndex = (*foundIndex).value.index;
-        for (auto i = elem.value.begin(); i != elem.value.end(); elem.value.nextIterator(&i)) {
-            size_t fileOffset = 0;
-            elem.value.get(i, &fileOffset);
-            relPayload.addReloc(fileOffset, nameIndex, 1, 2, 1, 2);
-        }
-    }
+    machoFile.loadCommands.pushBack(codeSegment);
+    machoFile.loadCommands.pushBack(loadCommand::symtab());
+    machoFile.loadCommands.pushBack(loadCommand::dysymtab());
 
-    codeSection.section.nreloc = relPayload.info.getSize();
-    codeSegment.sections.pushBack(codeSection);
+    segmentSection* codeSectionInBinary = nullptr;
+    codeSegment.sections.get(codeSectionPtr, &codeSectionInBinary);
     machoFile.payload.pushBack(relPayload.bufferWrite());
+    codeSectionInBinary->relocPayload =  machoFile.payload.getSize() - 1;
 
+    machoFile.binWrite(&binary);
+}
+
+void ObjectMachOGen::addDataIfNeeded(loadCommand &codeSegment) {
     if (data) {
         auto dataSection = segmentSection::data();
         binPayload dataPayload = {};
@@ -92,15 +87,40 @@ void ObjectMachOGen::dumpFile(binaryFile &binary) {
         dataPayload.align = 1;
         machoFile.payload.pushBack(dataPayload);
         codeSegment.sections.pushBack(dataSection);
-        codeSegment.payloads.pushBack(2);
+        codeSegment.payloads.pushBack(machoFile.payload.getSize() - 1);
+    }
+}
+
+void ObjectMachOGen::generalSetup(loadCommand &codeSegment, segmentSection &codeSection) {
+    codeSegment = loadCommand::codeObject();
+    codeSection = segmentSection::code();
+    machoFile.header = machHeader64::object();
+    machoFile.vmAlign = false;
+    machoFile.startFromZero = false;
+
+    binPayload codePayload = {};
+    codePayload.payload = (char *) code;
+    codePayload.size = codeSize;
+    codePayload.freeable = false;
+    codePayload.align = 1;
+
+    codeSection.section.align = 4;
+    codeSection.section.nreloc = relPayload.info.getSize();
+    machoFile.payload.pushBack(codePayload);
+    codeSegment.payloads.pushBack(machoFile.payload.getSize() - 1);
+
+    for (auto i = machoFile.sytable.storage.begin(); i != machoFile.sytable.storage.end(); i++) {
+        if ((*i).value.type == (*i).value.SYM_TYPE_DATA)
+            (*i).value.list.n_value += codePayload.size + codePayload.size % alignSmall;
     }
 
-    machoFile.loadCommands.pushBack(codeSegment);
-    machoFile.loadCommands.pushBack(loadCommand::symtab());
-    machoFile.loadCommands.pushBack(loadCommand::dysymtab());
-
-    machoFile.binWrite(&binary);
-    machoFile.dest();
+    machoFile.sytable.setSymIdexes();
+    for(auto i = relPayload.info.begin(); i != relPayload.info.end(); relPayload.info.nextIterator(&i)) {
+        relocationInfo *info = nullptr;
+        relPayload.info.get(i, &info);
+        auto symbolInTable = machoFile.sytable.storage.find(info->name);
+        info->info.r_symbolnum = (*symbolInTable).value.symTabIndex;
+    }
 }
 
 void ObjectMachOGen::addData(const char *setData, size_t size) {

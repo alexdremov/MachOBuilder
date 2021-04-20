@@ -11,19 +11,24 @@
 
 #endif
 
-#include "FastList.h"
+#include <FastList.h>
+
+struct relocationInfo{
+    relocation_info info;
+    const char* name;
+};
 
 struct relocatePayload {
-    FastList<relocation_info> info;
+    FastList<relocationInfo> info;
 
     void binWrite(binaryFile *out);
 
     binPayload bufferWrite();
 
-    void addReloc(int32_t r_address, uint32_t r_symbolnum, uint32_t r_pcrel, uint32_t r_length,
+    void addReloc(const char* name, int32_t r_address, uint32_t r_symbolnum, uint32_t r_pcrel, uint32_t r_length,
                   uint32_t r_extern, uint32_t r_type);
 
-    void addReloc(const relocation_info &other);
+    void addReloc(const relocationInfo &other);
 
     void init();
 

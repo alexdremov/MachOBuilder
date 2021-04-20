@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iterator>
-#include "FastList.h"
+#include <FastList.h>
 #include "hash/hashes.h"
 
 template<typename T>

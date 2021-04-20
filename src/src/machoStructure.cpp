@@ -2,8 +2,7 @@
 // Created by Александр Дремов on 11.04.2021.
 //
 
-#include <MachOBuilder.h>
-
+#include "loadCommands.h"
 #include "machoStructure.h"
 
 
@@ -175,6 +174,7 @@ void binPayload::binWrite(binaryFile *out) {
     out->alignZeroes(align);
     offset = out->sizeNow;
     out->write(payload, size);
+    out->writeZeros(size % alignSmall);
     realSize = size + size % alignSmall;
 //    out->writeZeros(size % alignSmall);
 }

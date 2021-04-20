@@ -18,15 +18,14 @@ set(SOURCE_FILES src/src/loadCommands.cpp
         )
 
 
-set(PUBLIC_INCLUDE_DIRECTORIES src/include/)
-set(PRIVATE_INCLUDE_DIRECTORIES "src/src/")
+set(PUBLIC_INCLUDE_DIRECTORIES src/include/ src/include/public)
+set(PRIVATE_INCLUDE_DIRECTORIES "src/src/ src/include/ src/include/public")
 set(MY_PUBLIC_HEADERS "src/include/public/MachOBuilder.h src/include/public/FastList.h")
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRECTORIES})
-target_include_directories(${PROJECT_NAME} PRIVATE src/include/public)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1)

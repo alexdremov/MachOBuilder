@@ -1,7 +1,7 @@
 //
 // Created by Александр Дремов on 09.04.2021.
 //
-#include "../src/include/public/MachOBuilder.h"
+#include <MachOBuilder.h>
 #include <cstdio>
 
 int main() {
@@ -27,6 +27,7 @@ int main() {
     mgen.setMain(0);
     mgen.bind("__Z8printTenv", 0x5);
     mgen.bind("__Z8printTenv", 0xA);
+    mgen.bindVarData("globalVar", 0, 1);
 
     mgen.addData(data, sizeof(data));
     mgen.dumpFile(binary);
