@@ -114,28 +114,38 @@ binary.dest();
 There is an API for creating an object file that can be linked using ld / gcc / clang
 
 ```java
-FILE *res = fopen("machoObjectAuto.o", "wb");
-binaryFile binary = {};
-binary.init(res);
+  FILE *res = fopen("machoObjectAuto.o", "wb");
+    binaryFile binary = {};
+    binary.init(res);
 
-ObjectMachOGen mgen = {};
-mgen.init();
+    ObjectMachOGen mgen = {};
+    mgen.init();
 
-unsigned char asmCode[] = {
-        0x55, 0x48, 0x89, 0xE5, // some commands
-        0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0x5 offset
-        0xE8, 0x00, 0x00, 0x00, 0x00, // call 0 <= 0xA offset
-        0x31, 0xC0, 0x5D,  0xC3 // some commands
-};
+    unsigned char asmCode[] = {
+            0x55, 0x48, 0x89, 0xE5,
+            0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
+            0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
+            0x8B, 0x05, 0x00, 0x00, 0x00, 0x00, // mov eax, dword ptr [rip + offset globalVar ]
+            0x31, 0xC0, 0x5D,  0xC3
+    };
 
-mgen.addCode(asmCode, sizeof(asmCode)); // set code
-mgen.setMain(0); // set main function offset
-mgen.bind("__Z8printTenv", 0x5); // 0x5 offset relocate to __Z8printTenv function
-mgen.bind("__Z8printTenv", 0xA); // 0xA offset relocate to __Z8printTenv function
-mgen.dumpFile(binary); // dump to file
+    unsigned char data[] = {
+            0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
+            0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
+    };
 
-mgen.dest();
-binary.dest();
+    mgen.addCode(asmCode, sizeof(asmCode));
+    mgen.addData(data, sizeof(data));
+
+    mgen.setMain(0);
+    mgen.bind("__Z8printTenv", 0x5);
+    mgen.bind("__Z8printTenv", 0xA);
+    mgen.bindVarData("globalVar", 0, 16);
+
+    mgen.dumpFile(binary);
+
+    mgen.dest();
+    binary.dest();
 ```
 
 It will create such structure:
