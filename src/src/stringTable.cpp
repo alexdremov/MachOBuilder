@@ -54,7 +54,7 @@ void symbolTable::dest() {
     payload.dest();
 }
 
-void symbolTable::addInside(const char *key, unsigned section, size_t offset) {
+void symbolTable::addInternal(const char *key, unsigned section, size_t offset) {
     unsigned index = payload.addString(key);
     nlist_64 symtbEntry = {};
     symtbEntry.n_type = N_SECT | N_EXT;
@@ -62,9 +62,10 @@ void symbolTable::addInside(const char *key, unsigned section, size_t offset) {
     symtbEntry.n_sect = section;
     symtbEntry.n_value = offset;
     auto found = storage.find(key);
+
     if (found != storage.end())
         return;
-    storage.set(key, {symtbEntry, 0, false});
+    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_INTERNAL});
 }
 
 void symbolTable::addExternal(const char *key) {
@@ -75,19 +76,19 @@ void symbolTable::addExternal(const char *key) {
     auto found = storage.find(key);
     if (found != storage.end())
         return;
-    storage.set(key, {symtbEntry, 0, true});
+    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_EXTERNAL});
 }
 
 void symbolTable::binWrite(binaryFile *out) {
     offset = out->sizeNow;
     for (auto &elem: storage) {
-        if (!elem.value.external)
+        if (elem.value.type == symbolTableEntry::SYM_TYPE_INTERNAL)
             continue;
         elem.value.offset = out->sizeNow;
         BINFILE_WRITE_STRUCT(elem.value.list);
     }
     for (auto &elem: storage) {
-        if (elem.value.external)
+        if (elem.value.type == symbolTableEntry::SYM_TYPE_EXTERNAL)
             continue;
         elem.value.offset = out->sizeNow;
         BINFILE_WRITE_STRUCT(elem.value.list);

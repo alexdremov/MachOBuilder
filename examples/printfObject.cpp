@@ -19,10 +19,16 @@ int main() {
             0x31, 0xC0, 0x5D,  0xC3
     };
 
+    unsigned char data[] = {
+            0xDE, 0xD0
+    };
+
     mgen.addCode(asmCode, sizeof(asmCode));
     mgen.setMain(0);
     mgen.bind("__Z8printTenv", 0x5);
     mgen.bind("__Z8printTenv", 0xA);
+
+    mgen.addData(data, sizeof(data));
     mgen.dumpFile(binary);
 
     mgen.dest();

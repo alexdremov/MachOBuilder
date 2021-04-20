@@ -62,6 +62,8 @@ struct segmentSection {
     void binWrite(binaryFile *out);
 
     static segmentSection code();
+
+    static segmentSection data();
 };
 
 struct symtabCommand{

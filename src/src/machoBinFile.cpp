@@ -331,18 +331,26 @@ void MachoFileBin::dsymUpdate(binaryFile *out){
         if (command->type != loadCommand::LC_TYPE_DYSYMTAB)
             continue;
         unsigned externalSize = 0;
+        unsigned internalSize = 0;
         for (auto &elem: sytable.storage) {
-            if (elem.value.external)
+            if (elem.value.type == symbolTableEntry::SYM_TYPE_EXTERNAL)
                 externalSize++;
+            else if (elem.value.type == symbolTableEntry::SYM_TYPE_INTERNAL)
+                internalSize++;
         }
-        command->dysymtabSeg.segment.iextdefsym = 0;
-        command->dysymtabSeg.segment.nextdefsym = sytable.storage.getSize() -  externalSize;
-        command->dysymtabSeg.segment.iundefsym = sytable.storage.getSize() -  externalSize;
-        command->dysymtabSeg.segment.nundefsym = externalSize;
+        command->dysymtabSeg.segment.ilocalsym = 0;
+        command->dysymtabSeg.segment.nlocalsym = 0;
+        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, ilocalsym);
+        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nlocalsym);
 
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nextdefsym);
+        command->dysymtabSeg.segment.iextdefsym = command->dysymtabSeg.segment.ilocalsym;
+        command->dysymtabSeg.segment.nextdefsym = internalSize;
         BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, iextdefsym);
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nundefsym);
+        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nextdefsym);
+
+        command->dysymtabSeg.segment.iundefsym = command->dysymtabSeg.segment.iextdefsym + command->dysymtabSeg.segment.nextdefsym;
+        command->dysymtabSeg.segment.nundefsym = externalSize;
         BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, iundefsym);
+        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nundefsym);
     }
 }

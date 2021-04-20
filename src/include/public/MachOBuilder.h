@@ -469,6 +469,8 @@ struct segmentSection {
     void binWrite(binaryFile *out);
 
     static segmentSection code();
+
+    static segmentSection data();
 };
 
 struct symtabCommand{
@@ -516,9 +518,14 @@ struct stringTablePayload {
 };
 
 struct symbolTableEntry{
+    enum symbolTableType {
+        SYM_TYPE_EXTERNAL,
+        SYM_TYPE_INTERNAL,
+        SYM_TYPE_LOCVAR
+    };
     nlist_64 list;
     size_t offset;
-    bool external;
+    symbolTableType type;
 };
 
 struct symbolTable {
@@ -536,7 +543,9 @@ struct symbolTable {
 
     void writePayload(binaryFile *out);
 
-    void addInside(const char *key, unsigned int section, size_t offset = 0);
+    void addInternal(const char *key, unsigned int section, size_t offset = 0);
+
+    void addData(const char *key, unsigned int section, size_t offset = 0);
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H
@@ -748,8 +757,11 @@ struct relocatePayload {
 
 struct ObjectMachOGen{
     HashMasm<FastList<size_t>> offsets;
+    HashMasm<FastList<size_t>> offsetsData;
     const char* code;
+    const char* data;
     size_t codeSize;
+    size_t dataSize;
     size_t mainOffset;
 
     void init();
@@ -760,11 +772,17 @@ struct ObjectMachOGen{
 
     void addCode(const char* setCode, size_t size);
 
-    void addCode(const unsigned char* setCode, size_t size);
+    void addData(const char* setCode, size_t size);
+
+    void addData(const unsigned char* setData, size_t size);
+
+    void addCode(const unsigned char* setData, size_t size);
 
     void setMain(size_t offset);
 
     void dumpFile(binaryFile& binary);
+
+    void bindData(const char *name, size_t offset);
 };
 
 #endif //MACHOBUILDER_OBJECTGENERATOR_H

@@ -4,19 +4,22 @@
 
 #include "objectGenerator.h"
 
-void ObjectMachOGen::init(){
+void ObjectMachOGen::init() {
     mainOffset = 0;
     code = nullptr;
+    data = nullptr;
+    codeSize = 0;
+    dataSize = 0;
     offsets.init();
 }
 
-void ObjectMachOGen::dest(){
+void ObjectMachOGen::dest() {
     offsets.dest();
 }
 
-void ObjectMachOGen::bind(const char* name, size_t offset){
+void ObjectMachOGen::bind(const char *name, size_t offset) {
     auto found = offsets.find(name);
-    if (found == offsets.end()){
+    if (found == offsets.end()) {
         FastList<size_t> list = {};
         list.init();
         offsets.set(name, list);
@@ -25,21 +28,21 @@ void ObjectMachOGen::bind(const char* name, size_t offset){
     (*found).value.pushBack(offset);
 }
 
-void ObjectMachOGen::addCode(const char* setCode, size_t size){
+void ObjectMachOGen::addCode(const char *setCode, size_t size) {
     code = setCode;
     codeSize = size;
 }
 
-void ObjectMachOGen::addCode(const unsigned char* setCode, size_t size){
-    code = (char*)setCode;
+void ObjectMachOGen::addCode(const unsigned char *setCode, size_t size) {
+    code = (char *) setCode;
     codeSize = size;
 }
 
-void ObjectMachOGen::setMain(size_t offset){
+void ObjectMachOGen::setMain(size_t offset) {
     mainOffset = offset;
 }
 
-void ObjectMachOGen::dumpFile(binaryFile& binary){
+void ObjectMachOGen::dumpFile(binaryFile &binary) {
     MachoFileBin machoFile = {};
     machoFile.init();
     machoFile.vmAlign = false;
@@ -61,15 +64,15 @@ void ObjectMachOGen::dumpFile(binaryFile& binary){
 
     for (auto elem: offsets)
         machoFile.sytable.addExternal(elem.key);
-    machoFile.sytable.addInside("_main", 1, mainOffset);
+    machoFile.sytable.addInternal("_main", 1, mainOffset);
 
     relocatePayload relPayload = {};
     relPayload.init();
 
-    for (auto elem: offsets){
+    for (auto elem: offsets) {
         auto foundIndex = machoFile.sytable.payload.storage.find(elem.key);
         unsigned nameIndex = (*foundIndex).value.index;
-        for(auto i = elem.value.begin(); i != elem.value.end(); elem.value.nextIterator(&i)){
+        for (auto i = elem.value.begin(); i != elem.value.end(); elem.value.nextIterator(&i)) {
             size_t fileOffset = 0;
             elem.value.get(i, &fileOffset);
             relPayload.addReloc(fileOffset, nameIndex, 1, 2, 1, 2);
@@ -78,12 +81,34 @@ void ObjectMachOGen::dumpFile(binaryFile& binary){
 
     codeSection.section.nreloc = relPayload.info.getSize();
     codeSegment.sections.pushBack(codeSection);
-    machoFile.loadCommands.pushBack(codeSegment);
     machoFile.payload.pushBack(relPayload.bufferWrite());
 
+    if (data) {
+        auto dataSection = segmentSection::data();
+        binPayload dataPayload = {};
+        dataPayload.payload = (char *) data;
+        dataPayload.size = dataSize;
+        dataPayload.freeable = false;
+        dataPayload.align = 1;
+        machoFile.payload.pushBack(dataPayload);
+        codeSegment.sections.pushBack(dataSection);
+        codeSegment.payloads.pushBack(2);
+    }
+
+    machoFile.loadCommands.pushBack(codeSegment);
     machoFile.loadCommands.pushBack(loadCommand::symtab());
     machoFile.loadCommands.pushBack(loadCommand::dysymtab());
 
     machoFile.binWrite(&binary);
     machoFile.dest();
+}
+
+void ObjectMachOGen::addData(const char *setData, size_t size) {
+    dataSize = size;
+    data = setData;
+}
+
+void ObjectMachOGen::addData(const unsigned char *setData, size_t size) {
+    dataSize = size;
+    data = (char *) setData;
 }

@@ -31,9 +31,13 @@ struct stringTablePayload {
 };
 
 struct symbolTableEntry{
+    enum symbolTableType {
+        SYM_TYPE_EXTERNAL,
+        SYM_TYPE_INTERNAL
+    };
     nlist_64 list;
     size_t offset;
-    bool external;
+    symbolTableType type;
 };
 
 struct symbolTable {
@@ -51,7 +55,9 @@ struct symbolTable {
 
     void writePayload(binaryFile *out);
 
-    void addInside(const char *key, unsigned int section, size_t offset = 0);
+    void addInternal(const char *key, unsigned int section, size_t offset = 0);
+
+    void addData(const char *key, unsigned int section, size_t offset = 0);
 };
 
 #endif //MACHOBUILDER_STRINGTABLE_H
