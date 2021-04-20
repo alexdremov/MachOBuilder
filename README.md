@@ -151,3 +151,16 @@ There is an API for creating an object file that can be linked using ld / gcc / 
 It will create such structure:
 
 <img width="400px" src="https://github.com/AlexRoar/MachOBuilder/raw/main/assets/struct.png">
+
+Several essential functions are used in the listing.
+
+`bind` set relocation address of desired symbol in code. 4 bytes address, X_86_64_RELOC_BRANCH
+args:
+- symbol
+- code offset
+
+`bindVarData` set relocation displacement of desired symbol in code. 4 bytes address, X_86_64_RELOC_SIGNED
+args:
+- symbol
+- data offset
+- code offset
