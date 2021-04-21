@@ -4,7 +4,7 @@
 
 #ifndef MACHOBUILDER_MACHOBUILDER_TEMPLATE_H
 #define MACHOBUILDER_MACHOBUILDER_TEMPLATE_H
-
+#define PUBLIC_HEADER
 #include <mach-o/loader.h>
 #include <mach/machine.h>
 #include <mach/mach.h>
@@ -15,6 +15,34 @@
 #include "FastList.h"
 
 //
+//File contents: hash/hashes.h
+//
+//
+// Created by Александр Дремов on 06.04.2021.
+//
+
+#ifndef HASHMASM_HASHES_H
+#define HASHMASM_HASHES_H
+#include <cstdlib>
+
+namespace CRC {
+    size_t hash64(size_t crc, const unsigned char *p);
+    size_t hash32(size_t crc, const unsigned char *p);
+    extern "C" size_t hash32AsmFLen(const unsigned char *p, size_t len, size_t hash = 0);
+    extern "C" size_t hash32Asm(const unsigned char *p, size_t len, size_t hash = 0);
+}
+
+namespace FNV {
+    size_t fnv64(const char *p, size_t hash = 14695981039346656037ULL);
+    extern "C" size_t fnv64Asm(const char *p, size_t hash = 14695981039346656037ULL);
+}
+
+namespace PolyHash {
+    size_t poly64(const char *p, size_t hash = 0);
+}
+
+#endif //HASHMASM_HASHES_H
+//
 //File contents: HashMasm.h
 //
 //
@@ -23,12 +51,18 @@
 
 #ifndef HashMasm_GUARD
 #define HashMasm_GUARD
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <iterator>
 #include <FastList.h>
+
+#ifndef PUBLIC_HEADER
+
 #include "hash/hashes.h"
+
+#endif
 
 template<typename T>
 class HashMasm {
@@ -129,7 +163,7 @@ class HashMasm {
         #endif
         #ifndef ASMOPT
         size_t i = storage[hashed].begin();
-        for (; i != storage[hashed].end();storage[hashed].nextIterator(&i)){
+        for (; i != storage[hashed].end(); storage[hashed].nextIterator(&i)) {
             storage[hashed].get(i, &tmpNode);
             if (strcmp(tmpNode->key, key) == 0) {
                 node = tmpNode;
@@ -259,7 +293,7 @@ public:
         return minCapacity;
     }
 
-    void printBucketsSizes(FILE* file=stdout) {
+    void printBucketsSizes(FILE *file = stdout) {
         for (size_t i = 0; i < getCapacity(); i++) {
             fprintf(file, "%zu, ", storage[i].getSize());
         }
@@ -317,7 +351,7 @@ private:
             return now;
         }
 
-        bool operator==(const HashIter &other) const{
+        bool operator==(const HashIter &other) const {
             if (end == other.end && end)
                 return true;
             return end == other.end && pos == other.pos && bucket == other.bucket && object == other.object;
@@ -356,11 +390,9 @@ public:
 
 #ifndef BinFile_GUARD
 #define BinFile_GUARD
-#ifndef PUBLIC_HEADER
 
     #include <cstdio>
     #include <cstdlib>
-#endif
 
 #define BINFILE_WRITE_STRUCT(structure) out->write((const void*)(&structure), sizeof(structure))
 #define BINFILE_WRITE_FIELD(field) out->write((const void*)&field, sizeof(field))
@@ -416,8 +448,9 @@ struct binaryFile {
 #include <mach/machine.h>
 #include <mach/mach.h>
 #include <mach-o/loader.h>
+#ifndef PUBLIC_HEADER
 #include "binaryFile.h"
-
+    #endif
 #endif
 
 struct segmentCommand64 {
@@ -483,138 +516,6 @@ struct dysymtabCommand{
 
 #endif //NGGC_LOADCOMMANDS_H
 //
-//File contents: stringTable.h
-//
-//
-// Created by Александр Дремов on 17.04.2021.
-//
-
-#ifndef MACHOBUILDER_STRINGTABLE_H
-#define MACHOBUILDER_STRINGTABLE_H
-
-#include <FastList.h>
-#include <mach-o/loader.h>
-#include <mach-o/nlist.h>
-#include "HashMasm.h"
-#include "binaryFile.h"
-
-struct stringIndOffset {
-    size_t index;
-    size_t offset;
-    uint32_t r_pcrel;
-    uint32_t r_length;
-    uint32_t r_extern;
-    uint32_t r_type;
-};
-
-struct stringTablePayload {
-    HashMasm<stringIndOffset> storage;
-    size_t offset;
-    size_t size;
-
-    void init();
-
-    unsigned addString(const char *key, uint32_t valOffset = 0,
-                       uint32_t r_pcrel = 0, uint32_t r_length = 0,
-                       uint32_t r_extern = 0, uint32_t r_type = 0);
-
-    void dest();
-
-    char **binWrite(binaryFile *out);
-};
-
-struct symbolTableEntry {
-    enum symbolTableType {
-        SYM_TYPE_EXTERNAL,
-        SYM_TYPE_INTERNAL,
-        SYM_TYPE_DATA
-    };
-    nlist_64 list;
-    size_t offset;
-    symbolTableType type;
-    size_t symTabIndex;
-};
-
-struct symbolTable {
-    HashMasm<symbolTableEntry> storage;
-    stringTablePayload payload;
-    size_t offset;
-
-    void init();
-
-    void dest();
-
-    void addExternal(const char *key);
-
-    void binWrite(binaryFile *out);
-
-    void writePayload(binaryFile *out);
-
-    void addInternal(const char *key, unsigned int section, size_t offset = 0);
-
-    void addData(const char *key, unsigned int section, size_t offset = 0);
-
-    void setSymIdexes();
-};
-
-#endif //MACHOBUILDER_STRINGTABLE_H
-//
-//File contents: machoBinFile.h
-//
-//
-// Created by Александр Дремов on 10.04.2021.
-//
-
-#ifndef machoFileBin_GUARD
-#define machoFileBin_GUARD
-#include "machoStructure.h"
-#include "public/FastList.h"
-#include "relocateStruct.h"
-#include "stringTable.h"
-
-struct MachoFileBin {
-    machHeader64 header;
-    FastList<loadCommand> loadCommands;
-    FastList<binPayload> payload;
-    symbolTable sytable;
-    bool vmAlign;
-    bool startFromZero;
-
-    void init();
-
-    void dest();
-
-    static MachoFileBin *New();
-
-    static void simpleExe(binaryFile& binary, const char* code, size_t size);
-
-    void Delete();
-
-    void binWrite(binaryFile *out);
-
-    void postprocess(binaryFile *out);
-
-    void threadSectionLink(binaryFile *out);
-
-    void mainSectionLink(binaryFile *out);
-
-    void vmRemap(binaryFile *out);
-
-    void relocRemap(binaryFile *out);
-
-    void payloadsProcess(binaryFile *out);
-
-    void fileOffsetsRemap(binaryFile *out);
-
-    segmentSection *getSectionByIndex(size_t sectionNum, loadCommand** lc= nullptr);
-
-    void symbolTableSet(binaryFile *pFile);
-
-    void dsymUpdate(binaryFile *out);
-};
-
-#endif //machoFileBin_GUARD
-//
 //File contents: machoStructure.h
 //
 //
@@ -623,7 +524,6 @@ struct MachoFileBin {
 
 #ifndef CLANGUAGE_MACHOHEADERSTR_H
 #define CLANGUAGE_MACHOHEADERSTR_H
-#ifndef PUBLIC_HEADER
 
 #include <mach/machine.h>
 #include <mach/mach.h>
@@ -633,11 +533,11 @@ struct MachoFileBin {
 #include <cstring>
 #include <cstdio>
 
-#endif
-
+#ifndef PUBLIC_HEADER
 #include "binaryFile.h"
 #include "loadCommands.h"
 #include "public/FastList.h"
+    #endif
 
 #define alignSmall 8
 #define alignPage 4096
@@ -714,6 +614,142 @@ struct binPayload {
 
 #endif //CLANGUAGE_MACHOHEADER_H
 //
+//File contents: stringTable.h
+//
+//
+// Created by Александр Дремов on 17.04.2021.
+//
+
+#ifndef MACHOBUILDER_STRINGTABLE_H
+#define MACHOBUILDER_STRINGTABLE_H
+
+#include <FastList.h>
+#include <mach-o/loader.h>
+#include <mach-o/nlist.h>
+#ifndef PUBLIC_HEADER
+#include "HashMasm.h"
+#include "binaryFile.h"
+    #endif
+
+struct stringIndOffset {
+    size_t index;
+    size_t offset;
+    uint32_t r_pcrel;
+    uint32_t r_length;
+    uint32_t r_extern;
+    uint32_t r_type;
+};
+
+struct stringTablePayload {
+    HashMasm<stringIndOffset> storage;
+    size_t offset;
+    size_t size;
+
+    void init();
+
+    unsigned addString(const char *key, uint32_t valOffset = 0,
+                       uint32_t r_pcrel = 0, uint32_t r_length = 0,
+                       uint32_t r_extern = 0, uint32_t r_type = 0);
+
+    void dest();
+
+    char **binWrite(binaryFile *out);
+};
+
+struct symbolTableEntry {
+    enum symbolTableType {
+        SYM_TYPE_EXTERNAL,
+        SYM_TYPE_INTERNAL,
+        SYM_TYPE_DATA
+    };
+    nlist_64 list;
+    size_t offset;
+    symbolTableType type;
+    size_t symTabIndex;
+};
+
+struct symbolTable {
+    HashMasm<symbolTableEntry> storage;
+    stringTablePayload payload;
+    size_t offset;
+
+    void init();
+
+    void dest();
+
+    void addExternal(const char *key);
+
+    void binWrite(binaryFile *out);
+
+    void writePayload(binaryFile *out);
+
+    void addInternal(const char *key, unsigned int section, size_t offset = 0);
+
+    void addData(const char *key, unsigned int section, size_t offset = 0);
+
+    void setSymIdexes();
+};
+
+#endif //MACHOBUILDER_STRINGTABLE_H
+//
+//File contents: machoBinFile.h
+//
+//
+// Created by Александр Дремов on 10.04.2021.
+//
+
+#ifndef machoFileBin_GUARD
+#define machoFileBin_GUARD
+#ifndef PUBLIC_HEADER
+#include "machoStructure.h"
+#include "public/FastList.h"
+#include "relocateStruct.h"
+#include "stringTable.h"
+    #endif
+
+struct MachoFileBin {
+    machHeader64 header;
+    FastList<loadCommand> loadCommands;
+    FastList<binPayload> payload;
+    symbolTable sytable;
+    bool vmAlign;
+    bool startFromZero;
+
+    void init();
+
+    void dest();
+
+    static MachoFileBin *New();
+
+    static void simpleExe(binaryFile& binary, const char* code, size_t size);
+
+    void Delete();
+
+    void binWrite(binaryFile *out);
+
+    void postprocess(binaryFile *out);
+
+    void threadSectionLink(binaryFile *out);
+
+    void mainSectionLink(binaryFile *out);
+
+    void vmRemap(binaryFile *out);
+
+    void relocRemap(binaryFile *out);
+
+    void payloadsProcess(binaryFile *out);
+
+    void fileOffsetsRemap(binaryFile *out);
+
+    segmentSection *getSectionByIndex(size_t sectionNum, loadCommand** lc= nullptr);
+
+    void symbolTableSet(binaryFile *pFile);
+
+    void dsymUpdate(binaryFile *out);
+};
+
+#endif //machoFileBin_GUARD
+//
 //File contents: relocateStruct.h
 //
 //
@@ -722,12 +758,12 @@ struct binPayload {
 
 #ifndef MACHOBUILDER_RELOCATESTRUCT_H
 #define MACHOBUILDER_RELOCATESTRUCT_H
-#ifndef PUBLIC_HEADER
 
 #include <mach-o/reloc.h>
-#include <binaryFile.h>
+#ifndef PUBLIC_HEADER
+#include "binaryFile.h"
+    #endif
 
-#endif
 
 #include <FastList.h>
 
@@ -764,8 +800,10 @@ struct relocatePayload {
 
 #ifndef MACHOBUILDER_OBJECTGENERATOR_H
 #define MACHOBUILDER_OBJECTGENERATOR_H
+#ifndef PUBLIC_HEADER
 #include "HashMasm.h"
 #include "binaryFile.h"
+    #endif
 #include <cstdio>
 #include <MachOBuilder.h>
 

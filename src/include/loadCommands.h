@@ -9,8 +9,9 @@
 #include <mach/machine.h>
 #include <mach/mach.h>
 #include <mach-o/loader.h>
+#ifndef PUBLIC_HEADER
 #include "binaryFile.h"
-
+    #endif
 #endif
 
 struct segmentCommand64 {

@@ -4,10 +4,12 @@
 
 #ifndef machoFileBin_GUARD
 #define machoFileBin_GUARD
+#ifndef PUBLIC_HEADER
 #include "machoStructure.h"
 #include "public/FastList.h"
 #include "relocateStruct.h"
 #include "stringTable.h"
+    #endif
 
 struct MachoFileBin {
     machHeader64 header;

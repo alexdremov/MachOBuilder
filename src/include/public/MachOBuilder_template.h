@@ -4,7 +4,7 @@
 
 #ifndef MACHOBUILDER_MACHOBUILDER_TEMPLATE_H
 #define MACHOBUILDER_MACHOBUILDER_TEMPLATE_H
-
+#define PUBLIC_HEADER
 #include <mach-o/loader.h>
 #include <mach/machine.h>
 #include <mach/mach.h>

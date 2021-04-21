@@ -5,12 +5,13 @@ def getFileContents(file) -> str:
 
 prefix = '../'
 files = [
+    'hash/hashes.h',
     'HashMasm.h',
     'binaryFile.h',
     'loadCommands.h',
+    'machoStructure.h',
     'stringTable.h',
     'machoBinFile.h',
-    'machoStructure.h',
     'relocateStruct.h',
     'objectGenerator.h'
 ]

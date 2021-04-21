@@ -4,8 +4,10 @@
 
 #ifndef MACHOBUILDER_OBJECTGENERATOR_H
 #define MACHOBUILDER_OBJECTGENERATOR_H
+#ifndef PUBLIC_HEADER
 #include "HashMasm.h"
 #include "binaryFile.h"
+    #endif
 #include <cstdio>
 #include <MachOBuilder.h>
 

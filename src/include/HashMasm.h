@@ -4,12 +4,18 @@
 
 #ifndef HashMasm_GUARD
 #define HashMasm_GUARD
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <iterator>
 #include <FastList.h>
+
+#ifndef PUBLIC_HEADER
+
 #include "hash/hashes.h"
+
+#endif
 
 template<typename T>
 class HashMasm {
@@ -110,7 +116,7 @@ class HashMasm {
         #endif
         #ifndef ASMOPT
         size_t i = storage[hashed].begin();
-        for (; i != storage[hashed].end();storage[hashed].nextIterator(&i)){
+        for (; i != storage[hashed].end(); storage[hashed].nextIterator(&i)) {
             storage[hashed].get(i, &tmpNode);
             if (strcmp(tmpNode->key, key) == 0) {
                 node = tmpNode;
@@ -240,7 +246,7 @@ public:
         return minCapacity;
     }
 
-    void printBucketsSizes(FILE* file=stdout) {
+    void printBucketsSizes(FILE *file = stdout) {
         for (size_t i = 0; i < getCapacity(); i++) {
             fprintf(file, "%zu, ", storage[i].getSize());
         }
@@ -298,7 +304,7 @@ private:
             return now;
         }
 
-        bool operator==(const HashIter &other) const{
+        bool operator==(const HashIter &other) const {
             if (end == other.end && end)
                 return true;
             return end == other.end && pos == other.pos && bucket == other.bucket && object == other.object;

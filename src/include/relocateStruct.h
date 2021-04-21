@@ -4,12 +4,12 @@
 
 #ifndef MACHOBUILDER_RELOCATESTRUCT_H
 #define MACHOBUILDER_RELOCATESTRUCT_H
-#ifndef PUBLIC_HEADER
 
 #include <mach-o/reloc.h>
-#include <binaryFile.h>
+#ifndef PUBLIC_HEADER
+#include "binaryFile.h"
+    #endif
 
-#endif
 
 #include <FastList.h>
 

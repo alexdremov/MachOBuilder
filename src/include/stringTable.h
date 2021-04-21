@@ -8,8 +8,10 @@
 #include <FastList.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#ifndef PUBLIC_HEADER
 #include "HashMasm.h"
 #include "binaryFile.h"
+    #endif
 
 struct stringIndOffset {
     size_t index;

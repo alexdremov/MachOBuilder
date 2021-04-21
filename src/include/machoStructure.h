@@ -4,7 +4,6 @@
 
 #ifndef CLANGUAGE_MACHOHEADERSTR_H
 #define CLANGUAGE_MACHOHEADERSTR_H
-#ifndef PUBLIC_HEADER
 
 #include <mach/machine.h>
 #include <mach/mach.h>
@@ -14,11 +13,11 @@
 #include <cstring>
 #include <cstdio>
 
-#endif
-
+#ifndef PUBLIC_HEADER
 #include "binaryFile.h"
 #include "loadCommands.h"
 #include "public/FastList.h"
+    #endif
 
 #define alignSmall 8
 #define alignPage 4096

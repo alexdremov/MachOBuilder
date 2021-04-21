@@ -4,11 +4,9 @@
 
 #ifndef BinFile_GUARD
 #define BinFile_GUARD
-#ifndef PUBLIC_HEADER
 
     #include <cstdio>
     #include <cstdlib>
-#endif
 
 #define BINFILE_WRITE_STRUCT(structure) out->write((const void*)(&structure), sizeof(structure))
 #define BINFILE_WRITE_FIELD(field) out->write((const void*)&field, sizeof(field))
