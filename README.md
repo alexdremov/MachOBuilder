@@ -114,38 +114,42 @@ binary.dest();
 There is an API for creating an object file that can be linked using ld / gcc / clang
 
 ```java
-    FILE *res = fopen("machoObjectAuto.o", "wb");
-    binaryFile binary = {};
-    binary.init(res);
+FILE *res = fopen("machoObjectAuto.o", "wb");
+binaryFile binary = {};
+binary.init(res);
 
-    ObjectMachOGen mgen = {};
-    mgen.init();
+ObjectMachOGen mgen = {};
+mgen.init();
 
-    unsigned char asmCode[] = {
-            0x55, 0x48, 0x89, 0xE5,
-            0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
-            0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
-            0x8B, 0x05, 0x00, 0x00, 0x00, 0x00, // mov eax, dword ptr [rip + offset globalVar ]
-            0x31, 0xC0, 0x5D,  0xC3
-    };
+unsigned char asmCode[] = {
+        0x55, 0x48, 0x89, 0xE5,
+        0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
+        0xE8, 0x00, 0x00, 0x00, 0x00, // call __Z8printTenv
+        0x8B, 0x05, 0x00, 0x00, 0x00, 0x00, // mov eax, dword ptr [rip + offset globalVar ]
+        0x31, 0xC0, 0x5D,
+        0xE8, 0x00, 0x00, 0x00, 0x00,
+        0xC3
+};
 
-    unsigned char data[] = {
-            0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
-            0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
-    };
+unsigned char data[] = {
+        0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
+        0xDE, 0xD3, 0x2D, 0xED, 0x32, 0xDE, 0xD3, 0x2D, 0xED, 0x32,
+};
 
-    mgen.addCode(asmCode, sizeof(asmCode));
-    mgen.addData(data, sizeof(data));
+mgen.addCode(asmCode, sizeof(asmCode));
+mgen.addData(data, sizeof(data));
 
-    mgen.setMain(0);
-    mgen.bindBranchExt("__Z8printTenv", 0x5);
-    mgen.bindBranchExt("__Z8printTenv", 0xA);
-    mgen.bindSignedOffsetData("globalVar", 0, 16);
+mgen.addInternalCodeSymbol("_main", 0);
+mgen.addInternalDataSymbol("globalVar", 0);
 
-    mgen.dumpFile(binary);
+mgen.bindBranchExt("__Z5printi", 0x5);
+mgen.bindBranchExt("__Z5printi", 0xA);
+mgen.bindSignedOffset("globalVar", 16);
 
-    mgen.dest();
-    binary.dest();
+mgen.dumpFile(binary);
+
+mgen.dest();
+binary.dest();
 ```
 
 It will create such structure:
@@ -154,13 +158,18 @@ It will create such structure:
 
 Several essential functions are used in the listing.
 
-`bindBranchExt` set relocation address of desired symbol in code. 4 bytes address, X_86_64_RELOC_BRANCH
-args:
-- symbol
-- code offset
+`addInternalCodeSymbol` defines symbol at *offset* in code section
+- symbol - symbol name
+- offset - offset from the start of the section
 
-`bindSignedOffsetData` set relocation displacement of desired symbol in code. 4 bytes address, X_86_64_RELOC_SIGNED
-args:
-- symbol
-- data offset
-- code offset
+`addInternalDataSymbol` defines symbol at *offset* in data section
+- symbol - symbol name
+- offset - offset from the start of the section
+
+`bindBranchExt` defines address position for relocation for external symbol
+- symbol - symbol name
+- offset - address offset from the start of the code section
+
+`bindSignedOffset` defines address position for relocation for internal symbol
+- symbol - symbol name
+- offset - address offset from the start of the code section

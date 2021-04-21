@@ -5,7 +5,6 @@
 #include "objectGenerator.h"
 
 void ObjectMachOGen::init() {
-    mainOffset = 0;
     code = nullptr;
     data = nullptr;
     codeSize = 0;
@@ -30,8 +29,7 @@ void ObjectMachOGen::bindBranchExt(const char *name, size_t offsetName) {
                         (*foundIndex).value.r_type);
 }
 
-void ObjectMachOGen::bindSignedOffsetData(const char *name, size_t offsetData, size_t offsetBind) {
-    machoFile.sytable.addData(name, 2, offsetData);
+void ObjectMachOGen::bindSignedOffset(const char *name, size_t offsetBind) {
     auto foundIndex = machoFile.sytable.payload.storage.find(name);
     unsigned nameIndex = (*foundIndex).value.index;
     relPayload.addReloc((*foundIndex).key, offsetBind, nameIndex,
@@ -51,14 +49,18 @@ void ObjectMachOGen::addCode(const unsigned char *setCode, size_t size) {
     codeSize = size;
 }
 
-void ObjectMachOGen::setMain(size_t offset) {
-    mainOffset = offset;
+void ObjectMachOGen::addInternalCodeSymbol(const char* symbol, size_t offset){
+    machoFile.sytable.addInternal(symbol, 1, offset);
+}
+
+void ObjectMachOGen::addInternalDataSymbol(const char* symbol, size_t offset){
+    machoFile.sytable.addData(symbol, 2, offset);
 }
 
 void ObjectMachOGen::dumpFile(binaryFile &binary) {
     loadCommand codeSegment = {};
     segmentSection codeSection = {};
-    machoFile.sytable.addInternal("_main", 1, mainOffset);
+
     generalSetup(codeSegment, codeSection);
 
     size_t codeSectionPtr = 0;
