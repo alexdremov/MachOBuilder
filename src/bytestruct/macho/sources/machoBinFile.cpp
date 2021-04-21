@@ -3,15 +3,12 @@
 //
 #include "machoStructure.h"
 #include "machoBinFile.h"
-#include "public/FastList.h"
+#include "FastList.h"
 
 void MachoFileBin::init() {
     payload.init();
-    sytable.init();
     loadCommands.init();
     header = {};
-    vmAlign = true;
-    startFromZero = true;
 }
 
 void MachoFileBin::dest() {
@@ -25,7 +22,6 @@ void MachoFileBin::dest() {
         payload.get(it, &tmp);
         tmp->dest();
     }
-    sytable.dest();
     loadCommands.dest();
 }
 
@@ -77,9 +73,6 @@ void MachoFileBin::postprocess(binaryFile *out) {
     vmRemap(out);
     mainSectionLink(out);
     threadSectionLink(out);
-    symbolTableSet(out);
-    relocRemap(out);
-    dsymUpdate(out);
 }
 
 void MachoFileBin::threadSectionLink(binaryFile *out) {
@@ -121,16 +114,14 @@ void MachoFileBin::mainSectionLink(binaryFile *out) {
 void MachoFileBin::vmRemap(binaryFile *out) {
     size_t vmNow = 0;
     for (size_t it = loadCommands.begin(); it != loadCommands.end(); loadCommands.nextIterator(&it)) {
-        if (vmAlign)
-            vmNow += vmNow % alignPage;
+        vmNow += vmNow % alignPage;
         loadCommand *command = nullptr;
         loadCommands.get(it, &command);
         size_t vmStart = vmNow;
         if (command->type == loadCommand::LC_TYPE_SEGMENT) {
             if (command->generalSeg.segment.vmsize < command->generalSeg.segment.filesize)
                 command->generalSeg.segment.vmsize = command->generalSeg.segment.filesize;
-            if (vmAlign)
-                command->generalSeg.segment.vmsize += command->generalSeg.segment.vmsize % alignPage;
+            command->generalSeg.segment.vmsize += command->generalSeg.segment.vmsize % alignPage;
             command->generalSeg.segment.vmaddr = vmNow;
             vmNow += command->generalSeg.segment.vmsize;
 
@@ -166,21 +157,11 @@ void MachoFileBin::payloadsProcess(binaryFile *out) {
              itPayload != pLoadCommand->payloads.end(); pLoadCommand->payloads.nextIterator(&itPayload)) {
             unsigned *payloadId = nullptr;
             pLoadCommand->payloads.get(itPayload, &payloadId);
+            size_t payloadAddr = pLoadCommand->payloads.logicToPhysic(*payloadId);
             binPayload *payloadNow = nullptr;
-            payload.getLogic(*payloadId, &payloadNow);
+            payload.get(payloadAddr, &payloadNow);
             payloadNow->binWrite(out);
         }
-        for (size_t sectit = pLoadCommand->sections.begin();
-             sectit != pLoadCommand->sections.end(); pLoadCommand->sections.nextIterator(&sectit)) {
-            segmentSection section = {};
-            pLoadCommand->sections.get(sectit, &section);
-            if (section.relocPayload != (size_t) -1) {
-                binPayload *selectedPayload = nullptr;
-                payload.getLogic(section.relocPayload, &selectedPayload);
-                selectedPayload->binWrite(out);
-            }
-        }
-
         size_t segmentsSize = out->sizeNow - segmentsStart;
         /*
         * SECTIONS DUMP FINISHED
@@ -212,8 +193,6 @@ void MachoFileBin::payloadsProcess(binaryFile *out) {
             }
             case loadCommand::LC_TYPE_THREAD:
             case loadCommand::LC_TYPE_MAIN:
-            case loadCommand::LC_TYPE_DYSYMTAB:
-            case loadCommand::LC_TYPE_SYMTAB:
                 break;
         }
     }
@@ -225,9 +204,6 @@ void MachoFileBin::fileOffsetsRemap(binaryFile *out) {
         loadCommand *command = nullptr;
         loadCommands.get(it, &command);
         if (command->type == loadCommand::LC_TYPE_SEGMENT) {
-            if (!startFromZero && foffset == 0) {
-                foffset = command->generalSeg.segment.fileoff;
-            }
             if (command->generalSeg.segment.fileoff > foffset) {
                 command->generalSeg.segment.filesize += command->generalSeg.segment.fileoff - foffset;
                 command->generalSeg.segment.fileoff = foffset;
@@ -254,101 +230,4 @@ segmentSection *MachoFileBin::getSectionByIndex(size_t sectionNum, loadCommand *
         sectionNum -= commandTmp->sections.getSize();
     }
     return segmentSectionTmp;
-}
-
-void MachoFileBin::simpleExe(binaryFile &binary, const char *code, size_t size) {
-    MachoFileBin machoFile = {};
-    machoFile.init();
-
-    machoFile.header = machHeader64::executable();
-    machoFile.loadCommands.pushBack(loadCommand::pageZero());
-
-    auto codeSection = loadCommand::code();
-    codeSection.sections.pushBack(segmentSection::code());
-    codeSection.payloads.pushBack(0);
-    machoFile.loadCommands.pushBack(codeSection);
-
-    machoFile.loadCommands.pushBack(loadCommand::thread(0));
-
-    binPayload codePayload = {};
-    codePayload.payload = (char *) code;
-    codePayload.size = size;
-    codePayload.freeable = false;
-    codePayload.align = 1;
-    machoFile.payload.pushBack(codePayload);
-
-    machoFile.binWrite(&binary);
-    machoFile.dest();
-}
-
-void MachoFileBin::relocRemap(binaryFile *out) {
-    loadCommand command = {};
-    for (size_t it = loadCommands.begin(); it != loadCommands.end(); loadCommands.nextIterator(&it)) {
-        loadCommands.get(it, &command);
-        if (command.type != loadCommand::LC_TYPE_SEGMENT)
-            continue;
-        for (size_t sectit = command.sections.begin();
-             sectit != command.sections.end(); command.sections.nextIterator(&sectit)) {
-            segmentSection section = {};
-            command.sections.get(sectit, &section);
-            if (section.relocPayload != (size_t) -1) {
-                binPayload selectedPayload = {};
-                payload.getLogic(section.relocPayload, &selectedPayload);
-                section.section.reloff = selectedPayload.offset;
-                BINFILE_UPDATE(section.offset, section.section, reloff);
-            }
-        }
-    }
-}
-
-void MachoFileBin::symbolTableSet(binaryFile *out) {
-    sytable.binWrite(out);
-    sytable.writePayload(out);
-
-    loadCommand command = {};
-    for (size_t it = loadCommands.begin(); it != loadCommands.end(); loadCommands.nextIterator(&it)) {
-        loadCommands.get(it, &command);
-        if (command.type != loadCommand::LC_TYPE_SYMTAB)
-            continue;
-        command.symtabSeg.segment.symoff = sytable.offset;
-        command.symtabSeg.segment.stroff = sytable.payload.offset;
-        command.symtabSeg.segment.strsize = sytable.payload.size;
-        command.symtabSeg.segment.nsyms = sytable.storage.getSize();
-
-        BINFILE_UPDATE(command.offset, command.symtabSeg.segment, strsize);
-        BINFILE_UPDATE(command.offset, command.symtabSeg.segment, stroff);
-        BINFILE_UPDATE(command.offset, command.symtabSeg.segment, symoff);
-        BINFILE_UPDATE(command.offset, command.symtabSeg.segment, nsyms);
-    }
-}
-
-void MachoFileBin::dsymUpdate(binaryFile *out){
-    loadCommand* command = nullptr;
-    for (size_t it = loadCommands.begin(); it != loadCommands.end(); loadCommands.nextIterator(&it)) {
-        loadCommands.get(it, &command);
-        if (command->type != loadCommand::LC_TYPE_DYSYMTAB)
-            continue;
-        unsigned externalSize = 0;
-        unsigned internalSize = 0;
-        for (auto &elem: sytable.storage) {
-            if (elem.value.type == symbolTableEntry::SYM_TYPE_EXTERNAL)
-                externalSize++;
-            else if (elem.value.type == symbolTableEntry::SYM_TYPE_INTERNAL || elem.value.type == symbolTableEntry::SYM_TYPE_DATA)
-                internalSize++;
-        }
-        command->dysymtabSeg.segment.ilocalsym = 0;
-        command->dysymtabSeg.segment.nlocalsym = 0;
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, ilocalsym);
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nlocalsym);
-
-        command->dysymtabSeg.segment.iextdefsym = command->dysymtabSeg.segment.ilocalsym;
-        command->dysymtabSeg.segment.nextdefsym = internalSize;
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, iextdefsym);
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nextdefsym);
-
-        command->dysymtabSeg.segment.iundefsym = command->dysymtabSeg.segment.iextdefsym + command->dysymtabSeg.segment.nextdefsym;
-        command->dysymtabSeg.segment.nundefsym = externalSize;
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, iundefsym);
-        BINFILE_UPDATE(command->offset, command->dysymtabSeg.segment, nundefsym);
-    }
 }
