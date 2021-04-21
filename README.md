@@ -114,7 +114,7 @@ binary.dest();
 There is an API for creating an object file that can be linked using ld / gcc / clang
 
 ```java
-  FILE *res = fopen("machoObjectAuto.o", "wb");
+    FILE *res = fopen("machoObjectAuto.o", "wb");
     binaryFile binary = {};
     binary.init(res);
 
@@ -138,9 +138,9 @@ There is an API for creating an object file that can be linked using ld / gcc / 
     mgen.addData(data, sizeof(data));
 
     mgen.setMain(0);
-    mgen.bind("__Z8printTenv", 0x5);
-    mgen.bind("__Z8printTenv", 0xA);
-    mgen.bindVarData("globalVar", 0, 16);
+    mgen.bindBranchExt("__Z8printTenv", 0x5);
+    mgen.bindBranchExt("__Z8printTenv", 0xA);
+    mgen.bindSignedOffsetData("globalVar", 0, 16);
 
     mgen.dumpFile(binary);
 
@@ -154,12 +154,12 @@ It will create such structure:
 
 Several essential functions are used in the listing.
 
-`bind` set relocation address of desired symbol in code. 4 bytes address, X_86_64_RELOC_BRANCH
+`bindBranchExt` set relocation address of desired symbol in code. 4 bytes address, X_86_64_RELOC_BRANCH
 args:
 - symbol
 - code offset
 
-`bindVarData` set relocation displacement of desired symbol in code. 4 bytes address, X_86_64_RELOC_SIGNED
+`bindSignedOffsetData` set relocation displacement of desired symbol in code. 4 bytes address, X_86_64_RELOC_SIGNED
 args:
 - symbol
 - data offset

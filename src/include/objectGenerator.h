@@ -22,7 +22,7 @@ struct ObjectMachOGen{
 
     void dest();
 
-    void bind(const char* name, size_t offsetName);
+    void bindBranchExt(const char* name, size_t offsetName);
 
     void addCode(const char* setCode, size_t size);
 
@@ -36,7 +36,7 @@ struct ObjectMachOGen{
 
     void dumpFile(binaryFile& binary);
 
-    void bindVarData(const char *name, size_t offsetData, size_t offsetBind);
+    void bindSignedOffsetData(const char *name, size_t offsetData, size_t offsetBind);
 
     void generalSetup(loadCommand &codeSegment, segmentSection &codeSection);
 

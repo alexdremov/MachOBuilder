@@ -19,7 +19,7 @@ void ObjectMachOGen::dest() {
     machoFile.dest();
 }
 
-void ObjectMachOGen::bind(const char *name, size_t offsetName) {
+void ObjectMachOGen::bindBranchExt(const char *name, size_t offsetName) {
     machoFile.sytable.addExternal(name);
     auto foundIndex = machoFile.sytable.payload.storage.find(name);
     unsigned nameIndex = (*foundIndex).value.index;
@@ -30,7 +30,7 @@ void ObjectMachOGen::bind(const char *name, size_t offsetName) {
                         (*foundIndex).value.r_type);
 }
 
-void ObjectMachOGen::bindVarData(const char *name, size_t offsetData, size_t offsetBind) {
+void ObjectMachOGen::bindSignedOffsetData(const char *name, size_t offsetData, size_t offsetBind) {
     machoFile.sytable.addData(name, 2, offsetData);
     auto foundIndex = machoFile.sytable.payload.storage.find(name);
     unsigned nameIndex = (*foundIndex).value.index;

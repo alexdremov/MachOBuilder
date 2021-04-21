@@ -29,9 +29,9 @@ int main() {
     mgen.addData(data, sizeof(data));
 
     mgen.setMain(0);
-    mgen.bind("__Z8printTenv", 0x5);
-    mgen.bind("__Z8printTenv", 0xA);
-    mgen.bindVarData("globalVar", 0, 16);
+    mgen.bindBranchExt("__Z8printTenv", 0x5);
+    mgen.bindBranchExt("__Z8printTenv", 0xA);
+    mgen.bindSignedOffsetData("globalVar", 0, 16);
 
     mgen.dumpFile(binary);
 
