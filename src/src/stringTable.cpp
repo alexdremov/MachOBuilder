@@ -66,7 +66,7 @@ void symbolTable::addInternal(const char *key, unsigned section, size_t offsetNa
 
     if (found != storage.end())
         return;
-    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_INTERNAL});
+    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_INTERNAL, 0});
 }
 
 void symbolTable::addData(const char *key, unsigned section, size_t offsetName) {
@@ -80,7 +80,7 @@ void symbolTable::addData(const char *key, unsigned section, size_t offsetName) 
 
     if (found != storage.end())
         return;
-    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_DATA});
+    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_DATA, 0});
 }
 
 void symbolTable::addExternal(const char *key) {
@@ -91,7 +91,7 @@ void symbolTable::addExternal(const char *key) {
     auto found = storage.find(key);
     if (found != storage.end())
         return;
-    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_EXTERNAL});
+    storage.set(key, {symtbEntry, 0, symbolTableEntry::symbolTableType::SYM_TYPE_EXTERNAL, 0});
 }
 
 void symbolTable::setSymIdexes(){

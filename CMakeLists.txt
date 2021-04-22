@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(MachOBuilder VERSION 1.0.0 DESCRIPTION "Mach-O file builder interface" LANGUAGES CXX)
+project(MachOBuilder VERSION 1.2.0 DESCRIPTION "Mach-O file builder interface" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(DEFAULT_BUILD_TYPE "Release")
@@ -16,7 +16,6 @@ set(SOURCE_FILES src/src/loadCommands.cpp
         src/src/objectGenerator.cpp
         src/include/hash/hashes.cpp
         )
-
 
 set(PUBLIC_INCLUDE_DIRECTORIES src/include/ src/include/public)
 set(PRIVATE_INCLUDE_DIRECTORIES "src/src/ src/include/ src/include/public")

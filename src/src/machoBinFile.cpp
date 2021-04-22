@@ -25,6 +25,7 @@ void MachoFileBin::dest() {
         payload.get(it, &tmp);
         tmp->dest();
     }
+    payload.dest();
     sytable.dest();
     loadCommands.dest();
 }

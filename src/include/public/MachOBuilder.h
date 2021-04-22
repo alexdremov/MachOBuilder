@@ -75,8 +75,10 @@ class HashMasm {
 
 
         void dest() {
-            if (duplicateKey)
+            if (duplicateKey && key) {
                 free((void *) key);
+                key = nullptr;
+            }
         }
     };
 
@@ -131,8 +133,14 @@ class HashMasm {
     }
 
     void freeStorage(FastList<HashCell> *storageTest) {
-        for (size_t i = 0; i < capacity; i++)
+        for (size_t i = 0; i < capacity; i++) {
+            for(auto j = storageTest[i].begin(); j!= storageTest[i].end(); storageTest[i].nextIterator(&j)){
+                HashCell* ptr = nullptr;
+                storageTest[i].get(j, &ptr);
+                ptr->dest();
+            }
             storageTest[i].dest();
+        }
         free(storageTest);
     }
 
@@ -238,7 +246,7 @@ public:
     }
 
     T &operator[](const char *key) {
-        size_t hashedInitial = hashString(key, strlen(key));
+        size_t hashedInitial = hashString(key);
         size_t hashed = hashedInitial % capacity, id = 0;
         findCell(key, hashed, &id);
         if (!id) {
@@ -344,6 +352,14 @@ private:
             object->storage[bucket].get(pos, &value);
             return *value;
         }
+
+
+        HashCell *operator->() {
+            HashCell *value = nullptr;
+            object->storage[bucket].get(pos, &value);
+            return value;
+        }
+
 
         HashIter operator++(int) {
             HashIter now = *this;
