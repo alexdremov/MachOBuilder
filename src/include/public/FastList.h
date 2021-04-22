@@ -512,7 +512,7 @@ public:
         if (elemNumbers < this->sumSize())
             elemNumbers = this->sumSize();
         elemNumbers++;
-        auto newStorage = (ListNode *) calloc(elemNumbers, sizeof(ListNode));
+        auto newStorage = (ListNode *) realloc(storage, elemNumbers * sizeof(ListNode));
         if (newStorage == nullptr)
             return LIST_OP_NOMEM;
         this->storage = newStorage;
