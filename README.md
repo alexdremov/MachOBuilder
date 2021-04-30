@@ -1,6 +1,6 @@
 # MachOBuilder
 
-Executable mach-o file builder.
+Executable and object mach-o file builder.
 
 ## Install
 
