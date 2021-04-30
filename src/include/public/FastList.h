@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 
 enum ListOpResult {
     LIST_OP_OK,
@@ -36,6 +37,17 @@ class FastList {
     size_t freePtr;
     size_t freeSize;
 public:
+
+    FastList<T> copy(){
+        FastList<T> newList = {};
+        newList.init(capacity);
+        newList.optimized = optimized;
+        newList.size = size;
+        newList.freePtr = freePtr;
+        newList.freeSize = freeSize;
+        memcpy(newList.storage, storage, capacity * sizeof(storage[0]));
+        return newList;
+    }
 
     void init() {
         init(INITIAL_INCREASE);
