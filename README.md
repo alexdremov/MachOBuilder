@@ -3,6 +3,7 @@
 Executable and object mach-o file builder.
 
 Description of an object file structure can be found in my blog:
+
 https://alexdremov.ru/mystery-of-mach-o-object-file-builders/
 
 ## Install
